@@ -64,23 +64,46 @@ docker run --rm -p 8080:8080 \
 
 ## API
 
-前端使用以下端点：
+### 前端 API 端点
+
+Web UI 使用以下 JSON 端点：
 
 * `GET /api/list?prefix=...&delimiter=/&max=...&continuationToken=...`
+  返回指定前缀下的对象和公共前缀（文件夹）的分页列表。
 * `GET /api/stats?prefix=...`
+  返回指定前缀下对象的统计信息（总大小和数量）。
 * `POST /api/rename`
+  重命名（移动）对象或前缀到新键。
+  请求体：`{"oldKey":"...","newKey":"..."}`
 * `POST /api/delete-prefix`
+  删除对象或前缀下的所有对象。
+  请求体：`{"prefix":"..."}`
 
-S3 代理端点：
+### S3 代理端点
 
-* `GET|HEAD /s3` → 列出存储桶（原始 S3 列表）
-* `GET|HEAD /s3/<key>` → 获取对象
-* `PUT /s3/<key>` → 上传对象
-* `DELETE /s3/<key>` → 删除对象
+服务器作为到已配置 S3 端点的透明代理。所有对 `/s3*` 的请求都使用 AWS Signature V4 进行转发。
 
-健康检查：
+* `GET|HEAD /s3`
+  列出存储桶（返回原始 S3 XML `ListBucketResult`）。
+  查询参数：`prefix`, `delimiter`, `max-keys`, `continuation-token` 等。
+* `GET|HEAD /s3/<key>`
+  检索对象。支持 `Range` 头部用于部分下载。
+* `PUT /s3/<key>`
+  上传对象。请求体直接流式传输到 S3。
+* `DELETE /s3/<key>`
+  删除对象。
+
+这些端点保留 S3 语义和头部（ETag、Content‑Type、Content‑Length 等）。
+
+### 健康检查
 
 * `GET /healthz`
+  如果服务器可以连接到配置的 S3 端点，则返回 `200 OK`。
+
+### CORS
+
+服务器为所有端点设置 `Access-Control-Allow-Origin: *` 和适当的 CORS 头部。
+支持所有方法的预检请求（`OPTIONS`）。
 
 ---
 
@@ -98,24 +121,54 @@ S3 代理端点：
 
 ## 开发
 
-项目结构：
+### 项目结构
 
-```
+```text
 src/
-  main.go
-  go.mod
-  public/       # 前端（静态资源）
+  main.go          # 服务器主入口
+  go.mod           # Go 模块定义
+  public/          # 前端静态资源（HTML、CSS、JS）
+  .goreleaser.yaml # 发布配置
 test/
-  docker-compose.yaml
-  ...
+  docker-compose.yaml # 本地 S3 栈（使用 Garage）
+  garage/          # Garage S3 服务器配置
+  Dockerfile       # 测试环境镜像
+.github/workflows/
+  release.yaml     # CI/CD 发布配置
 ```
 
-本地运行（需要 Go）：
+### 本地运行（需要 Go）
 
 ```bash
 cd src
 go run .
 ```
+
+服务器将启动在 `http://localhost:8080`（或通过 `PORT` 环境变量定义的端口）。
+
+### 构建二进制文件
+
+构建独立的二进制文件：
+
+```bash
+cd src
+go build -o s3-browser .
+```
+
+二进制文件包含嵌入式前端资源。
+
+### 使用 GoReleaser 发布
+
+项目使用 [GoReleaser](https://goreleaser.com) 创建跨平台发布。配置文件位于 `src/.goreleaser.yaml`。
+
+本地创建发布（需要安装 GoReleaser）：
+
+```bash
+cd src
+goreleaser release --snapshot --clean
+```
+
+CI 在推送 Git 标签 `v*` 时自动构建和发布版本。
 
 ---
 

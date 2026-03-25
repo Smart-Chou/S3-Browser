@@ -33,13 +33,13 @@ The server signs S3 requests using AWS Signature V4 and forwards them to your S3
 The server is configured via environment variables:
 
 | Variable               | Required | Description                   | Example          |
-| ---------------------- | -------: | ----------------------------- | ---------------- |
-| `S3_ENDPOINT`          |        ✅ | Base URL of the S3 endpoint   | `http://s3:9000` |
-| `S3_REGION`            |        ✅ | Region used for SigV4 signing | `us-east-1`      |
-| `S3_ACCESS_KEY_ID`     |        ✅ | Access key id                 | `AKIA...`        |
-| `S3_SECRET_ACCESS_KEY` |        ✅ | Secret access key             | `...`            |
-| `S3_BUCKET`            |        ✅ | Bucket name                   | `my-bucket`      |
-| `PORT`                 |        ❌ | Listen port (default: `8080`) | `8080`           |
+| ---------------------- | :------: | ----------------------------- | ---------------- |
+| `S3_ENDPOINT`          | ✅       | Base URL of the S3 endpoint   | `http://s3:9000` |
+| `S3_REGION`            | ✅       | Region used for SigV4 signing | `us-east-1`      |
+| `S3_ACCESS_KEY_ID`     | ✅       | Access key id                 | `AKIA...`        |
+| `S3_SECRET_ACCESS_KEY` | ✅       | Secret access key             | `...`            |
+| `S3_BUCKET`            | ✅       | Bucket name                   | `my-bucket`      |
+| `PORT`                 | ❌       | Listen port (default: `8080`) | `8080`           |
 
 ---
 
@@ -64,23 +64,46 @@ Open: `http://localhost:8080/`
 
 ## API
 
-The frontend uses these endpoints:
+### Frontend API Endpoints
+
+The web UI uses these JSON endpoints:
 
 * `GET /api/list?prefix=...&delimiter=/&max=...&continuationToken=...`
+  Returns a paginated list of objects and common prefixes (folders) under the given prefix.
 * `GET /api/stats?prefix=...`
+  Returns statistics (total size and count) for objects under the given prefix.
 * `POST /api/rename`
+  Renames (moves) an object or prefix to a new key.
+  Request body: `{"oldKey":"...","newKey":"..."}`
 * `POST /api/delete-prefix`
+  Deletes an object or all objects under a prefix.
+  Request body: `{"prefix":"..."}`
 
-S3 proxy endpoints:
+### S3 Proxy Endpoints
 
-* `GET|HEAD /s3` → list bucket (raw S3 list)
-* `GET|HEAD /s3/<key>` → get object
-* `PUT /s3/<key>` → upload object
-* `DELETE /s3/<key>` → delete object
+The server acts as a transparent proxy to the configured S3 endpoint. All requests to `/s3*` are forwarded with AWS Signature V4.
 
-Healthcheck:
+* `GET|HEAD /s3`
+  Lists the bucket (returns raw S3 XML `ListBucketResult`).
+  Query parameters: `prefix`, `delimiter`, `max-keys`, `continuation-token`, etc.
+* `GET|HEAD /s3/<key>`
+  Retrieves an object. Supports `Range` headers for partial downloads.
+* `PUT /s3/<key>`
+  Uploads an object. The request body is streamed directly to S3.
+* `DELETE /s3/<key>`
+  Deletes an object.
+
+These endpoints preserve S3 semantics and headers (ETag, Content‑Type, Content‑Length, etc.).
+
+### Health Check
 
 * `GET /healthz`
+  Returns `200 OK` if the server can reach the configured S3 endpoint.
+
+### CORS
+
+The server sets `Access-Control-Allow-Origin: *` and appropriate CORS headers for all endpoints.
+Preflight requests (`OPTIONS`) are supported for all methods.
 
 ---
 
@@ -98,24 +121,54 @@ Each release provides binaries for:
 
 ## Development
 
-Project layout:
+### Project Layout
 
-```
+```text
 src/
-  main.go
-  go.mod
-  public/       # frontend (static assets)
+  main.go          # main server entry point
+  go.mod           # Go module definition
+  public/          # frontend static assets (HTML, CSS, JS)
+  .goreleaser.yaml # release configuration
 test/
-  docker-compose.yaml
-  ...
+  docker-compose.yaml # local S3 stack with Garage
+  garage/          # Garage S3 server setup
+  Dockerfile       # test environment image
+.github/workflows/
+  release.yaml     # CI/CD for releases
 ```
 
-Run locally (requires Go):
+### Run Locally (Requires Go)
 
 ```bash
 cd src
 go run .
 ```
+
+The server will start on `http://localhost:8080` (or the port defined by `PORT` environment variable).
+
+### Build Binary
+
+To build a standalone binary:
+
+```bash
+cd src
+go build -o s3-browser .
+```
+
+The binary includes embedded frontend assets.
+
+### Release with GoReleaser
+
+The project uses [GoReleaser](https://goreleaser.com) for creating cross‑platform releases. Configuration is in `src/.goreleaser.yaml`.
+
+To create a release locally (requires GoReleaser installed):
+
+```bash
+cd src
+goreleaser release --snapshot --clean
+```
+
+CI automatically builds and publishes releases when a Git tag `v*` is pushed.
 
 ---
 
