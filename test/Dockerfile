@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 WORKDIR /src
 RUN apk add --no-cache ca-certificates
 
@@ -9,7 +9,10 @@ RUN go mod download
 COPY src/ ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/s3-browser
 
-FROM scratch
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /out/s3-browser /s3-browser
+ENTRYPOINT ["/s3-browser"]
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /out/s3-browser /s3-browser
 EXPOSE 8080

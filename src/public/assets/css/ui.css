@@ -1,9 +1,13 @@
 :root {
-  --bb-primary: var(--primary-color, #167df0);
-  --bb-border: #e5e7eb;  /* gray-200 */
-  --bb-text: #111827;    /* gray-900 */
-  --bb-muted: #6b7280;   /* gray-500 */
-  --bb-bg: #ffffff;
+  --bb-primary: var(--primary, #2563eb);
+  --bb-primary-hover: var(--primary-hover, #1d4ed8);
+  --bb-border: var(--border, #e5e7eb);
+  --bb-text: var(--text-primary, #111827);
+  --bb-muted: var(--text-secondary, #6b7280);
+  --bb-bg: var(--surface, #ffffff);
+  --bb-hover: var(--hover, #f3f4f6);
+  --bb-radius: var(--radius-md, 8px);
+  --bb-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
 }
 
 .bb-no-scroll { overflow: hidden !important; }

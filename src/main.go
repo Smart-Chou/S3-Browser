@@ -78,7 +78,7 @@ type cfg struct {
 func mustEnv(k string) string {
         v := strings.TrimSpace(os.Getenv(k))
         if v == "" {
-                log.Fatalf("missing env: %s", k)
+                log.Fatalf("缺少环境变量: %s", k)
         }
         return v
 }
@@ -110,7 +110,7 @@ type proxy struct {
 func newProxy(c cfg) *proxy {
         u, err := url.Parse(strings.TrimRight(c.Endpoint, "/"))
         if err != nil {
-                log.Fatalf("invalid S3_ENDPOINT: %v", err)
+                log.Fatalf("无效的 S3_ENDPOINT: %v", err)
         }
         tr := &http.Transport{
                 Proxy: http.ProxyFromEnvironment,
@@ -212,7 +212,7 @@ func (p *proxy) forwardRaw(w http.ResponseWriter, r *http.Request, method, pathU
 
 func (p *proxy) handleList(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet && r.Method != http.MethodHead {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped := "/" + p.cfg.Bucket
@@ -252,12 +252,12 @@ func (p *proxy) splitKeyFromURL(r *http.Request) (pathUnescaped, rawPath string,
 
 func (p *proxy) handleGetObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet && r.Method != http.MethodHead {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "bad path", http.StatusBadRequest)
+                http.Error(w, "路径错误", http.StatusBadRequest)
                 return
         }
         p.forwardRaw(w, r, r.Method, pathUnescaped, rawPath, r.URL.RawQuery, nil, 0, "")
@@ -265,12 +265,12 @@ func (p *proxy) handleGetObject(w http.ResponseWriter, r *http.Request) {
 
 func (p *proxy) handlePutObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPut {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "bad path", http.StatusBadRequest)
+                http.Error(w, "路径错误", http.StatusBadRequest)
                 return
         }
 
@@ -284,12 +284,12 @@ func (p *proxy) handlePutObject(w http.ResponseWriter, r *http.Request) {
 
 func (p *proxy) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodDelete {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "bad path", http.StatusBadRequest)
+                http.Error(w, "路径错误", http.StatusBadRequest)
                 return
         }
         p.forwardRaw(w, r, http.MethodDelete, pathUnescaped, rawPath, r.URL.RawQuery, nil, 0, "")
@@ -480,7 +480,7 @@ func detectKind(key string) string {
 
 func (p *proxy) handleStats(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         prefix := r.URL.Query().Get("prefix")
@@ -622,13 +622,13 @@ type renameResponse struct {
 
 func (p *proxy) handleRename(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPost {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         ctx := r.Context()
         var req renameRequest
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-                http.Error(w, "bad json", http.StatusBadRequest)
+                http.Error(w, "JSON格式错误", http.StatusBadRequest)
                 return
         }
 
@@ -691,13 +691,13 @@ type deletePrefixResponse struct {
 
 func (p *proxy) handleDeletePrefix(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPost {
-                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 return
         }
         ctx := r.Context()
         var req deletePrefixRequest
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-                http.Error(w, "bad json", http.StatusBadRequest)
+                http.Error(w, "JSON格式错误", http.StatusBadRequest)
                 return
         }
         pfx := strings.TrimLeft(req.Prefix, "/")
@@ -813,7 +813,7 @@ func isExcluded(rel string, excludes []string) bool {
 
 func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet && r.Method != http.MethodHead {
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
         return
     }
     ctx := r.Context()
@@ -831,7 +831,7 @@ func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
 
         cur, err := decodeCursor(r.URL.Query().Get("continuationToken"))
     if err != nil {
-        http.Error(w, "bad continuationToken", http.StatusBadRequest)
+        http.Error(w, "continuationToken 错误", http.StatusBadRequest)
         return
     }
     if cur.Phase != "dir" && cur.Phase != "file" { cur.Phase = "dir" }
@@ -1026,7 +1026,7 @@ func serveFSFile(w http.ResponseWriter, r *http.Request, root fs.FS, p string) {
 
 	b, err := io.ReadAll(f)
 	if err != nil {
-		http.Error(w, "read file", http.StatusInternalServerError)
+		http.Error(w, "读取文件错误", http.StatusInternalServerError)
 		return
 	}
 	http.ServeContent(w, r, info.Name(), time.Time{}, bytes.NewReader(b))
@@ -1064,7 +1064,7 @@ func (p *proxy) routes() http.Handler {
 
         publicFS, err := fs.Sub(embeddedPublic, "public")
 	if err != nil {
-		log.Fatalf("embed public: %v", err)
+		log.Fatalf("嵌入公共资源: %v", err)
 	}
 	mux.Handle("/", spaFileServerFS(publicFS))
 
@@ -1075,7 +1075,7 @@ func (p *proxy) routes() http.Handler {
                 case http.MethodOptions:
                         w.WriteHeader(http.StatusNoContent)
                 default:
-                        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 }
         })
 
@@ -1090,7 +1090,7 @@ func (p *proxy) routes() http.Handler {
                 case http.MethodOptions:
                         w.WriteHeader(http.StatusNoContent)
                 default:
-                        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+                        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
                 }
         })
 
