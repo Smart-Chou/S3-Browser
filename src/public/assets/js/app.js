@@ -96,7 +96,8 @@
     emptyTable: document.getElementById('empty-table'),
     fileTable: document.getElementById('file-table'),
     listViewButton: document.getElementById('list-view-button'),
-    gridViewButton: document.getElementById('grid-view-button')
+    gridViewButton: document.getElementById('grid-view-button'),
+    gridViewContainer: document.getElementById('grid-view-container')
   };
 
   // 工具函数
@@ -216,11 +217,17 @@
   // 渲染表格
   function renderTable() {
     elements.tableBody.innerHTML = '';
+    if (elements.gridViewContainer) {
+      elements.gridViewContainer.innerHTML = '';
+    }
 
     if (state.isRefreshing) {
       elements.loadingIndicator.style.display = 'block';
       elements.emptyTable.style.display = 'none';
       elements.fileTable.style.display = 'none';
+      if (elements.gridViewContainer) {
+        elements.gridViewContainer.style.display = 'none';
+      }
       return;
     }
 
@@ -229,6 +236,9 @@
     if (state.pathContentTableData.length === 0) {
       elements.emptyTable.style.display = 'block';
       elements.fileTable.style.display = 'none';
+      if (elements.gridViewContainer) {
+        elements.gridViewContainer.style.display = 'none';
+      }
       return;
     }
 
@@ -236,9 +246,15 @@
 
     if (state.viewMode === 'list') {
       elements.fileTable.style.display = 'table';
+      if (elements.gridViewContainer) {
+        elements.gridViewContainer.style.display = 'none';
+      }
       renderListView();
     } else {
       elements.fileTable.style.display = 'none';
+      if (elements.gridViewContainer) {
+        elements.gridViewContainer.style.display = 'block';
+      }
       renderGridView();
     }
   }
@@ -461,7 +477,11 @@
       gridContainer.appendChild(gridItem);
     });
 
-    elements.tableBody.appendChild(gridContainer);
+    if (elements.gridViewContainer) {
+      elements.gridViewContainer.appendChild(gridContainer);
+    } else {
+      elements.tableBody.appendChild(gridContainer);
+    }
   }
 
   // 渲染分页信息
