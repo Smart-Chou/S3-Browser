@@ -65,7 +65,8 @@
     isRefreshing: false,
     hasFflate: typeof window !== 'undefined' && !!window.fflate,
     pageSize: config.pageSize || 50,
-    dropdownOpen: null
+    dropdownOpen: null,
+    viewMode: 'list' // 'list' 或 'grid'
   };
 
   // DOM元素引用
@@ -93,7 +94,9 @@
     tableBody: document.getElementById('table-body'),
     loadingIndicator: document.getElementById('loading-indicator'),
     emptyTable: document.getElementById('empty-table'),
-    fileTable: document.getElementById('file-table')
+    fileTable: document.getElementById('file-table'),
+    listViewButton: document.getElementById('list-view-button'),
+    gridViewButton: document.getElementById('grid-view-button')
   };
 
   // 工具函数
@@ -230,7 +233,19 @@
     }
 
     elements.emptyTable.style.display = 'none';
-    elements.fileTable.style.display = 'table';
+
+    if (state.viewMode === 'list') {
+      elements.fileTable.style.display = 'table';
+      renderListView();
+    } else {
+      elements.fileTable.style.display = 'none';
+      renderGridView();
+    }
+  }
+
+  // 渲染列表视图
+  function renderListView() {
+    elements.tableBody.innerHTML = '';
 
     state.pathContentTableData.forEach(row => {
       const tr = document.createElement('tr');
@@ -387,6 +402,68 @@
     }
   }
 
+  // 渲染网格视图
+  function renderGridView() {
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'grid-view-container';
+
+    state.pathContentTableData.forEach(row => {
+      const gridItem = document.createElement('div');
+      gridItem.className = 'grid-view-item';
+      if (row.type === 'prefix') {
+        gridItem.classList.add('folder');
+      }
+
+      const icon = document.createElement('i');
+      icon.className = `mdi mdi-${fileRowIcon(row)}`;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'grid-item-name';
+      nameSpan.textContent = row.name;
+
+      const detailsDiv = document.createElement('div');
+      detailsDiv.className = 'grid-item-details';
+
+      if (row.type === 'content') {
+        const sizeSpan = document.createElement('span');
+        sizeSpan.textContent = formatBytes(row.size);
+        detailsDiv.appendChild(sizeSpan);
+      }
+
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = row.dateModified ? formatDateTime_relative(row.dateModified) : '-';
+      detailsDiv.appendChild(dateSpan);
+
+      gridItem.appendChild(icon);
+      gridItem.appendChild(nameSpan);
+      gridItem.appendChild(detailsDiv);
+
+      // 点击事件
+      gridItem.addEventListener('click', () => {
+        if (row.type === 'content') {
+          openPreview(row);
+        } else {
+          goToPrefix(row.prefix);
+        }
+      });
+
+      // 右键菜单（上下文菜单）
+      gridItem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        // 这里可以添加右键菜单功能，暂时使用已有的菜单系统
+        // 可以触发一个自定义事件或者直接调用菜单函数
+        if (BB.menu && BB.menu.showMenuForElement) {
+          // 简单实现：显示一个提示，实际需要集成现有菜单系统
+          BB.ui.toast(`右键菜单：${row.name}`);
+        }
+      });
+
+      gridContainer.appendChild(gridItem);
+    });
+
+    elements.tableBody.appendChild(gridContainer);
+  }
+
   // 渲染分页信息
   function renderPagination() {
     const page = currentPage();
@@ -405,6 +482,24 @@
   function updateState(newState) {
     Object.assign(state, newState);
     render();
+  }
+
+  // 设置视图模式
+  function setViewMode(mode) {
+    if (state.viewMode === mode) return;
+    state.viewMode = mode;
+
+    // 更新按钮active状态
+    if (mode === 'list') {
+      elements.listViewButton.classList.add('active');
+      elements.gridViewButton.classList.remove('active');
+    } else {
+      elements.listViewButton.classList.remove('active');
+      elements.gridViewButton.classList.add('active');
+    }
+
+    // 重新渲染表格
+    renderTable();
   }
 
   // 重新渲染所有组件
@@ -702,26 +797,31 @@
 
   // 下拉菜单切换
   function toggleDropdown(name) {
-    // 关闭所有下拉菜单
     const actionDropdown = elements.actionsDropdownButton.closest('.toolbar-dropdown');
     const newDropdown = elements.newDropdownButton.closest('.toolbar-dropdown');
 
     if (state.dropdownOpen === name) {
       // 点击已打开的下拉菜单，关闭它
-      state.dropdownOpen = null;
-      if (name === 'actions') actionDropdown.classList.remove('open');
-      if (name === 'new') newDropdown.classList.remove('open');
+      closeAllDropdowns();
     } else {
       // 打开新的下拉菜单，关闭其他的
+      closeAllDropdowns();
       state.dropdownOpen = name;
       if (name === 'actions') {
         actionDropdown.classList.add('open');
-        newDropdown.classList.remove('open');
       } else if (name === 'new') {
         newDropdown.classList.add('open');
-        actionDropdown.classList.remove('open');
       }
     }
+  }
+
+  // 关闭所有下拉菜单
+  function closeAllDropdowns() {
+    const actionDropdown = elements.actionsDropdownButton.closest('.toolbar-dropdown');
+    const newDropdown = elements.newDropdownButton.closest('.toolbar-dropdown');
+    actionDropdown.classList.remove('open');
+    newDropdown.classList.remove('open');
+    state.dropdownOpen = null;
   }
 
   // 事件监听器设置
@@ -756,6 +856,10 @@
     elements.uploadFileButton.addEventListener('click', triggerUpload);
     elements.uploadDirButton.addEventListener('click', triggerUploadDir);
 
+    // 视图切换按钮
+    elements.listViewButton.addEventListener('click', () => setViewMode('list'));
+    elements.gridViewButton.addEventListener('click', () => setViewMode('grid'));
+
     // 文件输入
     elements.fileInput.addEventListener('change', onFileInput);
     elements.dirInput.addEventListener('change', onDirInput);
@@ -783,6 +887,31 @@
 
     // hash变化
     window.addEventListener('hashchange', updatePathFromHash);
+
+    // 全局点击事件，点击其他地方时关闭下拉菜单
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      const actionDropdown = elements.actionsDropdownButton.closest('.toolbar-dropdown');
+      const newDropdown = elements.newDropdownButton.closest('.toolbar-dropdown');
+
+      // 检查点击是否在下拉菜单内部
+      const isClickInsideActions = actionDropdown.contains(target);
+      const isClickInsideNew = newDropdown.contains(target);
+
+      if (!isClickInsideActions && !isClickInsideNew) {
+        closeAllDropdowns();
+      }
+    });
+
+    // 阻止下拉菜单内部的点击事件冒泡到document
+    const dropdownMenus = [elements.actionsDropdownMenu, elements.newDropdownMenu];
+    dropdownMenus.forEach(menu => {
+      if (menu) {
+        menu.addEventListener('click', (event) => {
+          event.stopPropagation();
+        });
+      }
+    });
   }
 
   // 初始化
@@ -790,6 +919,8 @@
     state.hasFflate = !!(window && window.fflate);
     setupEventListeners();
     updatePathFromHash();
+    // 初始化视图模式按钮状态
+    setViewMode(state.viewMode);
     if (!state.pathContentTableData.length) {
       refresh();
     }
