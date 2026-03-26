@@ -4,6 +4,10 @@ src/main_test.go
 .idea
 .vscode
 
-
+.env
 *.log
 *.tmp
+
+# 临时测试文件
+fix-*.js
+fix-buttons.js
