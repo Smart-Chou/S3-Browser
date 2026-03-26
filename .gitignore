@@ -1,2 +1,9 @@
 .DS_Store
 src/main_test.go
+.claude
+.idea
+.vscode
+
+
+*.log
+*.tmp
