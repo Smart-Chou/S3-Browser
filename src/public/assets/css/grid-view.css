@@ -1,0 +1,94 @@
+/* 网格视图样式 */
+.grid-view-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.grid-view-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  background-color: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  min-height: 140px;
+}
+
+.grid-view-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.grid-view-item .mdi {
+  font-size: 48px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.grid-view-item.folder .mdi {
+  color: var(--primary);
+}
+
+.grid-item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.grid-item-details {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.grid-item-details span {
+  display: block;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .grid-view-container {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .grid-view-item .mdi {
+    font-size: 36px;
+  }
+
+  .grid-view-item {
+    min-height: 120px;
+    padding: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .grid-view-container {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .grid-view-item .mdi {
+    font-size: 32px;
+  }
+
+  .grid-item-name {
+    font-size: 0.85rem;
+  }
+}

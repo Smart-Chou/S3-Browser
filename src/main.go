@@ -2,12 +2,14 @@ package main
 
 import (
         "context"
+        "crypto/rand"
         "crypto/tls"
         "embed"
         "bytes"
         "mime"
         "path"
 	"encoding/base64"
+        "encoding/hex"
         "encoding/json"
         "encoding/xml"
         "fmt"
@@ -20,7 +22,9 @@ import (
         "sort"
         "strconv"
         "strings"
+        "sync"
         "time"
+        "golang.org/x/time/rate"
         "github.com/aws/aws-sdk-go-v2/aws"
         v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 )
@@ -67,33 +71,47 @@ type listResponseJSON struct {
 }
 
 type cfg struct {
-        Endpoint string
-        Region   string
-        AKID     string
-        Secret   string
-        Bucket   string
-        Port     string
+        Endpoint       string
+        Region         string
+        AKID           string
+        Secret         string
+        Bucket         string
+        Port           string
+        AllowedOrigins string
 }
 
 func mustEnv(k string) string {
         v := strings.TrimSpace(os.Getenv(k))
         if v == "" {
-                log.Fatalf("缺少环境变量: %s", k)
+                log.Fatalf("Missing environment variable: %s", k)
         }
         return v
 }
 
+func generateRequestID() string {
+        b := make([]byte, 8)
+        if _, err := rand.Read(b); err != nil {
+                // Fallback to timestamp-based ID
+                return fmt.Sprintf("%x", time.Now().UnixNano())
+        }
+        return hex.EncodeToString(b)
+}
+
 func loadCfg() cfg {
         c := cfg{
-                Endpoint: mustEnv("S3_ENDPOINT"),
-                Region:   mustEnv("S3_REGION"),
-                AKID:     mustEnv("S3_ACCESS_KEY_ID"),
-                Secret:   mustEnv("S3_SECRET_ACCESS_KEY"),
-                Bucket:   mustEnv("S3_BUCKET"),
-                Port:     os.Getenv("PORT"),
+                Endpoint:       mustEnv("S3_ENDPOINT"),
+                Region:         mustEnv("S3_REGION"),
+                AKID:           mustEnv("S3_ACCESS_KEY_ID"),
+                Secret:         mustEnv("S3_SECRET_ACCESS_KEY"),
+                Bucket:         mustEnv("S3_BUCKET"),
+                Port:           os.Getenv("PORT"),
+                AllowedOrigins: os.Getenv("ALLOWED_ORIGINS"),
         }
         if c.Port == "" {
                 c.Port = "8080"
+        }
+        if c.AllowedOrigins == "" {
+                c.AllowedOrigins = "*"
         }
         return c
 }
@@ -105,6 +123,10 @@ type proxy struct {
         signer  *v4.Signer
         creds   aws.Credentials
         hostHdr string
+        // 缓存统计结果，键格式为 "bucket:prefix"
+        statsCache sync.Map
+        // 速率限制器
+        rateLimiter *rate.Limiter
 }
 
 func newProxy(c cfg) *proxy {
@@ -125,6 +147,9 @@ func newProxy(c cfg) *proxy {
                 signer:  v4.NewSigner(),
                 creds:   aws.Credentials{AccessKeyID: c.AKID, SecretAccessKey: c.Secret, Source: "static"},
                 hostHdr: u.Host,
+                statsCache: sync.Map{},
+                // 默认速率限制：10 请求/秒，突发 30
+                rateLimiter: rate.NewLimiter(rate.Limit(10), 30),
         }
 }
 
@@ -147,7 +172,7 @@ func (p *proxy) copySafeHeaders(dst http.ResponseWriter, src *http.Response) {
                         dst.Header().Add(k, v)
                 }
         }
-        dst.Header().Set("Access-Control-Allow-Origin", "*")
+        // CORS headers are set by withCORS middleware
         dst.Header().Set("Access-Control-Expose-Headers", "ETag, Last-Modified, Content-Length, Content-Type")
 }
 
@@ -167,6 +192,15 @@ func (p *proxy) signAndDo(ctx context.Context, req *http.Request) (*http.Respons
 func (p *proxy) forwardRaw(w http.ResponseWriter, r *http.Request, method, pathUnescaped, rawPath, rawQuery string, body io.Reader, contentLength int64, contentType string) {
         ctx := r.Context()
 
+        // Add request ID for tracing
+        requestID := r.Header.Get("X-Request-ID")
+        if requestID == "" {
+                requestID = generateRequestID()
+        }
+
+        // Log request start
+        log.Printf("[%s] %s %s", requestID, method, pathUnescaped)
+
         u := *p.origin
         u.Path = pathUnescaped
         u.RawPath = rawPath
@@ -174,6 +208,7 @@ func (p *proxy) forwardRaw(w http.ResponseWriter, r *http.Request, method, pathU
 
         req, err := http.NewRequestWithContext(ctx, method, u.String(), body)
         if err != nil {
+                log.Printf("[%s] failed to create request: %v", requestID, err)
                 http.Error(w, fmt.Sprintf("new request: %v", err), http.StatusInternalServerError)
                 return
         }
@@ -194,10 +229,14 @@ func (p *proxy) forwardRaw(w http.ResponseWriter, r *http.Request, method, pathU
 
         resp, err := p.signAndDo(ctx, req)
         if err != nil {
+                log.Printf("[%s] upstream error: %v", requestID, err)
                 http.Error(w, fmt.Sprintf("upstream: %v", err), http.StatusBadGateway)
                 return
         }
         defer resp.Body.Close()
+
+        // Log response status
+        log.Printf("[%s] response status: %d", requestID, resp.StatusCode)
 
         for k := range w.Header() {
                 w.Header().Del(k)
@@ -212,7 +251,7 @@ func (p *proxy) forwardRaw(w http.ResponseWriter, r *http.Request, method, pathU
 
 func (p *proxy) handleList(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet && r.Method != http.MethodHead {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped := "/" + p.cfg.Bucket
@@ -252,12 +291,12 @@ func (p *proxy) splitKeyFromURL(r *http.Request) (pathUnescaped, rawPath string,
 
 func (p *proxy) handleGetObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet && r.Method != http.MethodHead {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "路径错误", http.StatusBadRequest)
+                http.Error(w, "Invalid path", http.StatusBadRequest)
                 return
         }
         p.forwardRaw(w, r, r.Method, pathUnescaped, rawPath, r.URL.RawQuery, nil, 0, "")
@@ -265,12 +304,12 @@ func (p *proxy) handleGetObject(w http.ResponseWriter, r *http.Request) {
 
 func (p *proxy) handlePutObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPut {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "路径错误", http.StatusBadRequest)
+                http.Error(w, "Invalid path", http.StatusBadRequest)
                 return
         }
 
@@ -284,12 +323,12 @@ func (p *proxy) handlePutObject(w http.ResponseWriter, r *http.Request) {
 
 func (p *proxy) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodDelete {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         pathUnescaped, rawPath, err := p.splitKeyFromURL(r)
         if err != nil {
-                http.Error(w, "路径错误", http.StatusBadRequest)
+                http.Error(w, "Invalid path", http.StatusBadRequest)
                 return
         }
         p.forwardRaw(w, r, http.MethodDelete, pathUnescaped, rawPath, r.URL.RawQuery, nil, 0, "")
@@ -446,6 +485,12 @@ type statsResponse struct {
         Oldest     *time.Time     `json:"oldest,omitempty"`
 }
 
+// statsCacheEntry 用于缓存统计结果
+type statsCacheEntry struct {
+        Data       statsResponse
+        ExpiresAt  time.Time
+}
+
 func detectKind(key string) string {
         k := strings.ToLower(key)
         ext := ""
@@ -480,10 +525,23 @@ func detectKind(key string) string {
 
 func (p *proxy) handleStats(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodGet {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         prefix := r.URL.Query().Get("prefix")
+
+        // 检查缓存
+        cacheKey := p.cfg.Bucket + ":" + prefix
+        if entry, ok := p.statsCache.Load(cacheKey); ok {
+                cached := entry.(statsCacheEntry)
+                if time.Now().Before(cached.ExpiresAt) {
+                        w.Header().Set("Content-Type", "application/json")
+                        json.NewEncoder(w).Encode(cached.Data)
+                        return
+                }
+                // 缓存过期，删除
+                p.statsCache.Delete(cacheKey)
+        }
 
         start := time.Now()
         ctx := r.Context()
@@ -604,10 +662,37 @@ func (p *proxy) handleStats(w http.ResponseWriter, r *http.Request) {
 
         out.TookMs = time.Since(start).Milliseconds()
 
+        // 缓存结果，有效期5分钟
+        p.statsCache.Store(cacheKey, statsCacheEntry{
+                Data:      out,
+                ExpiresAt: time.Now().Add(5 * time.Minute),
+        })
+
         w.Header().Set("Content-Type", "application/json")
         _ = json.NewEncoder(w).Encode(out)
 }
 
+// rateLimitMiddleware 包装处理函数，实施速率限制
+func (p *proxy) rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
+        return func(w http.ResponseWriter, r *http.Request) {
+                if !p.rateLimiter.Allow() {
+                        http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+                        return
+                }
+                next(w, r)
+        }
+}
+
+// withTimeout 返回一个中间件，为处理函数设置超时
+func (p *proxy) withTimeout(timeout time.Duration) func(http.HandlerFunc) http.HandlerFunc {
+        return func(next http.HandlerFunc) http.HandlerFunc {
+                return func(w http.ResponseWriter, r *http.Request) {
+                        ctx, cancel := context.WithTimeout(r.Context(), timeout)
+                        defer cancel()
+                        next(w, r.WithContext(ctx))
+                }
+        }
+}
 
 type renameRequest struct {
         Src      string `json:"src"`  
@@ -622,13 +707,13 @@ type renameResponse struct {
 
 func (p *proxy) handleRename(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPost {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         ctx := r.Context()
         var req renameRequest
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-                http.Error(w, "JSON格式错误", http.StatusBadRequest)
+                http.Error(w, "Invalid JSON format", http.StatusBadRequest)
                 return
         }
 
@@ -691,13 +776,13 @@ type deletePrefixResponse struct {
 
 func (p *proxy) handleDeletePrefix(w http.ResponseWriter, r *http.Request) {
         if r.Method != http.MethodPost {
-                http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 return
         }
         ctx := r.Context()
         var req deletePrefixRequest
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-                http.Error(w, "JSON格式错误", http.StatusBadRequest)
+                http.Error(w, "Invalid JSON format", http.StatusBadRequest)
                 return
         }
         pfx := strings.TrimLeft(req.Prefix, "/")
@@ -790,15 +875,34 @@ func (p *proxy) s3ListPage(ctx context.Context, prefix, delimiter, startAfter st
     return &lb, nil
 }
 func parseExcludes(r *http.Request) []string {
-    vals := r.URL.Query()["exclude"]
-    if len(vals) == 0 {
-        if s := r.URL.Query().Get("exclude"); s != "" {
-            vals = strings.Split(s, ",")
+    var items []string
+    // Check for array of exclude parameters
+    if vals := r.URL.Query()["exclude"]; len(vals) > 0 {
+        for _, v := range vals {
+            // Split each value by comma in case it's comma-separated
+            parts := strings.Split(v, ",")
+            for _, part := range parts {
+                part = strings.TrimSpace(part)
+                if part != "" {
+                    items = append(items, part)
+                }
+            }
+        }
+    } else if s := r.URL.Query().Get("exclude"); s != "" {
+        // Single exclude parameter
+        parts := strings.Split(s, ",")
+        for _, part := range parts {
+            part = strings.TrimSpace(part)
+            if part != "" {
+                items = append(items, part)
+            }
         }
     }
-    out := make([]string, 0, len(vals))
-    for _, v := range vals {
-        v = strings.TrimSpace(strings.TrimLeft(v, "/"))
+
+    // Remove leading slashes
+    out := make([]string, 0, len(items))
+    for _, v := range items {
+        v = strings.TrimLeft(v, "/")
         if v == "" { continue }
         out = append(out, v)
     }
@@ -813,7 +917,7 @@ func isExcluded(rel string, excludes []string) bool {
 
 func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet && r.Method != http.MethodHead {
-        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
     }
     ctx := r.Context()
@@ -831,7 +935,7 @@ func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
 
         cur, err := decodeCursor(r.URL.Query().Get("continuationToken"))
     if err != nil {
-        http.Error(w, "continuationToken 错误", http.StatusBadRequest)
+        http.Error(w, "Invalid continuationToken", http.StatusBadRequest)
         return
     }
     if cur.Phase != "dir" && cur.Phase != "file" { cur.Phase = "dir" }
@@ -978,19 +1082,36 @@ func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
 
 
 
-func withCORS(h http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                w.Header().Set("Access-Control-Allow-Origin", "*")
-                w.Header().Set("Vary", "Origin")
-                if r.Method == http.MethodOptions {
-                        w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, PUT, DELETE, POST, OPTIONS")
-                        w.Header().Set("Access-Control-Allow-Headers",
-                                "Content-Type, Content-Length, Range, If-None-Match, If-Modified-Since, Accept, User-Agent")
-                        w.WriteHeader(http.StatusNoContent)
-                        return
-                }
-                h.ServeHTTP(w, r)
-        })
+func withCORS(allowedOrigins string) func(http.Handler) http.Handler {
+        return func(h http.Handler) http.Handler {
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                        // Set CORS headers
+                        origin := r.Header.Get("Origin")
+                        if allowedOrigins == "*" {
+                                w.Header().Set("Access-Control-Allow-Origin", "*")
+                        } else if origin != "" {
+                                // Check if origin is allowed
+                                allowed := strings.Split(allowedOrigins, ",")
+                                for _, o := range allowed {
+                                        o = strings.TrimSpace(o)
+                                        if o == origin {
+                                                w.Header().Set("Access-Control-Allow-Origin", origin)
+                                                break
+                                        }
+                                }
+                        }
+                        w.Header().Set("Vary", "Origin")
+
+                        if r.Method == http.MethodOptions {
+                                w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, PUT, DELETE, POST, OPTIONS")
+                                w.Header().Set("Access-Control-Allow-Headers",
+                                        "Content-Type, Content-Length, Range, If-None-Match, If-Modified-Since, Accept, User-Agent")
+                                w.WriteHeader(http.StatusNoContent)
+                                return
+                        }
+                        h.ServeHTTP(w, r)
+                })
+        }
 }
 
 func cloneURL(u *url.URL) *url.URL { u2 := *u; return &u2 }
@@ -1026,7 +1147,7 @@ func serveFSFile(w http.ResponseWriter, r *http.Request, root fs.FS, p string) {
 
 	b, err := io.ReadAll(f)
 	if err != nil {
-		http.Error(w, "读取文件错误", http.StatusInternalServerError)
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
 		return
 	}
 	http.ServeContent(w, r, info.Name(), time.Time{}, bytes.NewReader(b))
@@ -1057,10 +1178,14 @@ func spaFileServerFS(root fs.FS) http.Handler {
 
 func (p *proxy) routes() http.Handler {
         mux := http.NewServeMux()
-	mux.HandleFunc("/api/list", p.handleListJSON)
-        mux.HandleFunc("/api/stats", p.handleStats)
-        mux.HandleFunc("/api/rename", p.handleRename)
-        mux.HandleFunc("/api/delete-prefix", p.handleDeletePrefix)
+	// 列表接口：速率限制 + 30秒超时
+	mux.HandleFunc("/api/list", p.rateLimitMiddleware(p.withTimeout(30*time.Second)(p.handleListJSON)))
+        // 统计接口：速率限制 + 5分钟超时
+        mux.HandleFunc("/api/stats", p.rateLimitMiddleware(p.withTimeout(5*time.Minute)(p.handleStats)))
+        // 重命名接口：速率限制 + 2分钟超时
+        mux.HandleFunc("/api/rename", p.rateLimitMiddleware(p.withTimeout(2*time.Minute)(p.handleRename)))
+        // 删除前缀接口：速率限制 + 2分钟超时
+        mux.HandleFunc("/api/delete-prefix", p.rateLimitMiddleware(p.withTimeout(2*time.Minute)(p.handleDeletePrefix)))
 
         publicFS, err := fs.Sub(embeddedPublic, "public")
 	if err != nil {
@@ -1075,7 +1200,7 @@ func (p *proxy) routes() http.Handler {
                 case http.MethodOptions:
                         w.WriteHeader(http.StatusNoContent)
                 default:
-                        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 }
         })
 
@@ -1090,7 +1215,7 @@ func (p *proxy) routes() http.Handler {
                 case http.MethodOptions:
                         w.WriteHeader(http.StatusNoContent)
                 default:
-                        http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+                        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
                 }
         })
 
@@ -1102,7 +1227,7 @@ func (p *proxy) routes() http.Handler {
                 _, _ = w.Write([]byte("ok\n"))
         })
 
-        return withCORS(mux)
+        return withCORS(p.cfg.AllowedOrigins)(mux)
 }
 
 func main() {

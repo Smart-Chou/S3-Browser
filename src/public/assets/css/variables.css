@@ -1,0 +1,76 @@
+/* S3-Browser CSS 变量系统 */
+:root {
+  /* 颜色变量系统 - 参考Filestash的现代设计 */
+  --primary: #167df0;           /* 现代蓝色 - 主要品牌色 */
+  --primary-hover: #1268d0;     /* 悬停状态的蓝色 */
+  --primary-light: #9AD1ED;     /* 浅蓝色背景 - Filestash风格 */
+  --secondary: #466372;         /* 中性辅助色 - Filestash secondary */
+  --accent: #0ea5e9;           /* 强调色 */
+
+  /* 背景颜色 */
+  --background: #f9fafc;        /* 页面背景 - Filestash super-light */
+  --surface: #ffffff;           /* 卡片/表面背景 - 白色 */
+  --surface-hover: #f8fafc;     /* 表面悬停状态 */
+
+  /* 文字颜色 */
+  --text-primary: #313538;      /* 主要文字 - Filestash标题色 */
+  --text-secondary: #6b7280;    /* 次要文字 - 中灰色 */
+  --text-muted: #9ca3af;        /* 弱化文字 */
+  --text-on-primary: #ffffff;   /* 在主要颜色上的文字 */
+
+  /* 边框和分隔线 */
+  --border: #e5e7eb;            /* 边框颜色 */
+  --border-light: #f1f5f9;      /* 浅边框 */
+  --divider: #f3f4f6;           /* 分隔线 */
+
+  /* 交互状态 */
+  --hover: #f3f4f6;             /* 悬停背景 */
+  --active: #e5e7eb;            /* 激活状态 */
+  --focus-ring: rgba(22, 125, 240, 0.2); /* 聚焦光环 */
+
+  /* 功能色 */
+  --success: #10b981;          /* 成功 */
+  --warning: #f59e0b;          /* 警告 */
+  --danger: #f26d6d;           /* 危险/错误 - Filestash error */
+  --info: #3b82f6;             /* 信息 */
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03); /* 更柔和的阴影 */
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* 间距 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* 布局 */
+  --container-max: 1280px;
+  --sidebar-width: 280px;
+  --header-height: 64px;
+  --toolbar-height: 56px;
+
+  /* 向后兼容 */
+  --primary-color: var(--primary); /* 保持现有变量兼容性 */
+
+  /* 图标尺寸 */
+  --icon-smmd: 1.50rem;
+  --icon-muted: #9aa0a6;
+  --icon-muted-hover: var(--primary-color);
+
+  /* 预览布局 */
+  --wrap-max: 1012px;
+  --h-pad: 2.5rem;
+  --v-pad: 4.5rem;
+}

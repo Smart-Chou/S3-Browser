@@ -1,0 +1,226 @@
+/* 布局结构 */
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主容器 - 现代化布局 */
+.app-container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  width: 100%;
+}
+
+/* 顶部导航栏 - 固定定位 */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+}
+
+.app-header .app-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* 工具栏区域 */
+.app-toolbar {
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-sm) 0;
+}
+
+.app-toolbar .app-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+/* 主要内容区域 */
+.app-main {
+  flex: 1;
+  padding: var(--space-lg) 0;
+  background-color: var(--background);
+}
+
+/* 面包屑导航 - 现代化样式 */
+.breadcrumbs-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.95rem;
+  padding: var(--space-sm) 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.breadcrumb-link {
+  color: var(--text-secondary);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.breadcrumb-link:hover {
+  color: var(--primary);
+  background-color: var(--hover);
+  text-decoration: none;
+}
+
+.breadcrumb-link.current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--text-muted);
+  margin: 0 var(--space-xs);
+}
+
+.breadcrumb-root {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.breadcrumb-root-icon {
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+#app #breadcrumbs {
+  margin-right: .5em;
+}
+
+#app #breadcrumbs .button .icon:first-child:not(:last-child) {
+  margin-left: calc(-.5em - 1px);
+  margin-right: calc(-.5em - 1px);
+}
+
+/* 面包屑行样式 */
+.breadcrumbs-row{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+
+.breadcrumbs-trail{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.25rem;
+  font-size:.95rem;
+}
+
+.breadcrumb-sep{ color:#a0a4ab; }
+
+/* 根目录链接 */
+.root-link {
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-top: 3px;
+}
+
+/* 卡片样式增强 */
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.card-content {
+  padding: var(--space-md) var(--space-lg);
+}:root {
+  --wrap-max: 1012px;
+  --h-pad: 2.5rem;
+  --v-pad: 4.5rem;
+}
+html, body { height: 100%; background: var(--background); }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  color: var(--text-primary);
+  font-size: 17px; /* Filestash 基础字号 */
+  line-height: 1.5;
+}
+
+.bar { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid #e9eef6; }
+.bar .wrap {
+  margin: 0 auto; max-width: var(--wrap-max);
+  padding: .75rem var(--h-pad); display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+}
+.bar-left { min-width: 0; display: flex; align-items: baseline; gap: .5rem; }
+.doc-name {
+  font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: min(50vw, 520px);
+}
+.doc-prefix { color: #64748b; font-size: .95em; }
+.doc-size { color: #6b7280; font-size: .95em; white-space: nowrap; }
+.bar-right { display: flex; align-items: center; gap: .25rem; }
+.icon-btn, .icon-btn-disc { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; color: #64748b; text-decoration: none; }
+.icon-btn > span > i, .icon-btn-disc > span > i {font-size: 1.3rem !important;}
+.icon-btn-disc {background-color: transparent !important; }
+.icon-btn:hover { background: #eef5ff !important; color: var(--primary) !important; }
+.icon-btn-disc:hover, .icon-btn-disc:hover > i.mdi { background-color: transparent !important; color: var(--primary) !important; }
+.icon-btn:disabled, .icon-btn-disc:disabled { background: transparent !important; color: #64748b !important; cursor: default !important;}
+
+.icon-btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+
+.viewer { padding: var(--v-pad) max(calc(100% - max(var(--wrap-max), min(var(--wrap-max), 100%))) / 2, var(--h-pad)); }
+.viewer .bb-menu-constrain { max-width: var(--wrap-max); margin: 0 auto; }
+.markdown-body img, .markdown-body video { display: block; max-width: 100%; height: auto; margin: 1rem auto; }
+.markdown-body iframe, .markdown-body embed { display: block; width: 100%; height: calc(100vh - 6rem); border: 0; background: #fff; border-radius: 8px; }
+.markdown-body > pre > code {background-color: white;}
+
+pre { border-radius: 10px; overflow: auto; padding: 1rem; background: #f6f8fa; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+.toolbar {
+  margin-bottom: 20px;
+}
+.root-link {
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-top: 3px;
+}
+.breadcrumbs {
+  display:flex;
+  align-items:center;
+  gap:.2rem;
+}
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.card-content {
+  padding: var(--space-md) var(--space-lg);
+}
