@@ -38,7 +38,7 @@
     const modal = el('div', 'bb-modal', '');
 
     const btnClose = el('button', 'bb-btn bb-btn-ghost bb-modal-x', '<i class="mdi mdi-close"></i>');
-    btnClose.setAttribute('aria-label', 'Close');
+    btnClose.setAttribute('aria-label', '关闭');
     var header = void 0;
     if (title != '' || html == '') {
       header = el('div', 'bb-modal-header', '');
@@ -59,7 +59,7 @@
       input.placeholder = defaultValue || '';
       input.autocomplete = 'off';
       input.spellcheck = false;
-      input.setAttribute('aria-label', 'Input');
+      input.setAttribute('aria-label', '输入');
       body.append(msg, input);
    } else if (html) {
       const wrap = el('div', 'bb-modal-html', '');
@@ -81,7 +81,7 @@
     }
 
     const footer = el('div', 'bb-modal-actions', '');
-    const btnCancel = el('button', 'bb-btn', 'Annuler');
+    const btnCancel = el('button', 'bb-btn', '取消');
     const btnOk = el('button', 'bb-btn bb-btn-primary', kind === 'confirm' ? 'OK' : (kind === 'prompt' ? 'OK' : 'OK'));
     if (kind != 'alert') {
       footer.append(btnCancel, btnOk);

@@ -143,6 +143,7 @@
   }
 
   function validBucketPrefix(prefix) {
+    console.log('validBucketPrefix checking:', prefix);
     if (prefix === '') return true;
     if (prefix.startsWith(' ') || prefix.endsWith(' ')) return false;
     if (prefix.includes('//')) return false;
@@ -151,7 +152,9 @@
   }
 
   function bucketPrefix() {
-    return `${config.rootPrefix}${state.pathPrefix || ''}`;
+    const result = `${config.rootPrefix}${state.pathPrefix || ''}`;
+    console.log('bucketPrefix result:', result, 'rootPrefix:', config.rootPrefix, 'pathPrefix:', state.pathPrefix);
+    return result;
   }
 
   function currentPage() {
@@ -537,10 +540,12 @@
 
   function updatePathFromHash() {
     const raw = decodeURIComponent((window.location.hash || '').replace(/^#/, ''));
+    console.log('updatePathFromHash raw:', raw);
     const q = raw.indexOf('?');
     const path = q === -1 ? raw : raw.slice(0, q);
     let target = path || '';
     if (!target && config.rootPrefix) target = config.rootPrefix;
+    console.log('updatePathFromHash target:', target, 'current pathPrefix:', state.pathPrefix);
     if (state.pathPrefix !== target) {
       updateState({
         pathPrefix: target,
@@ -555,10 +560,18 @@
   }
 
   function searchByPrefix() {
+    console.log('searchByPrefix called, searchPrefix=', state.searchPrefix, 'pathPrefix=', state.pathPrefix);
     if (validBucketPrefix(state.searchPrefix)) {
-      const dir = (state.pathPrefix || '').replace(/[^/]*$/, '');
-      const nextPath = dir + state.searchPrefix;
+      let base = state.pathPrefix || '';
+      // 如果base非空且不以斜杠结尾，添加斜杠，确保在当前目录内搜索
+      if (base && !base.endsWith('/')) {
+        base += '/';
+      }
+      const nextPath = base + state.searchPrefix;
+      console.log('base=', base, 'nextPath=', nextPath);
       if (('#' + nextPath) !== window.location.hash) window.location.hash = nextPath;
+    } else {
+      console.log('Invalid bucket prefix:', state.searchPrefix);
     }
   }
 
@@ -579,9 +592,11 @@
         url += `&continuationToken=${encodeURIComponent(state.continuationToken)}`;
       }
 
+      console.log('refresh API call:', url);
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+      console.log('refresh API response:', data);
 
       const nextContinuationToken = data.nextContinuationToken || undefined;
 
@@ -852,6 +867,7 @@
     // 搜索
     elements.searchButton.addEventListener('click', searchByPrefix);
     elements.searchInput.addEventListener('keyup', (e) => {
+      console.log('search input keyup, value=', e.target.value, 'key=', e.key);
       state.searchPrefix = e.target.value;
       if (e.key === 'Enter') searchByPrefix();
     });

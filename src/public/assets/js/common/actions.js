@@ -18,15 +18,15 @@
   function getUI() { return (BB.ui ? BB.ui : nativeUI()); }
 
   const labels = {
-    renameTitle: 'Rename',
-    deleteTitle: 'Delete',
-    deletePrompt: 'Delete this fichier ?',
-    folderDeletePrompt: 'Delete this folder and all it\'s content?',
-    deleteOk: 'Deleted.',
-    renameOk: 'Renamed.',
-    moveTrashOk: 'Moved to the trash',
-    unauthorized: 'Unauthorized',
-    copyDenied: 'Copy refused'
+    renameTitle: '重命名',
+    deleteTitle: '删除',
+    deletePrompt: '删除这个文件？',
+    folderDeletePrompt: '删除这个文件夹及其所有内容？',
+    deleteOk: '已删除。',
+    renameOk: '已重命名。',
+    moveTrashOk: '已移动到回收站',
+    unauthorized: '未经授权',
+    copyDenied: '复制被拒绝'
   };
 
   function escapeHTML(s=''){ const t=document.createElement('span'); t.textContent=String(s); return t.innerHTML; }
@@ -95,17 +95,17 @@
                 <span>${escapeHTML(name)}</span>
               </div>
             </div>
-            <a class="icon-btn-disc" title="Open file" rel="noopener" href="${escapeHTML(rawUrl)}">
+            <a class="icon-btn-disc" title="Open file/打开文件" rel="noopener" href="${escapeHTML(rawUrl)}">
               <i class="mdi mdi-open-in-new small-icon"></i>
             </a>
-            <a class="icon-btn-disc" title="Download" rel="noopener" href="${escapeHTML(rawUrl)}" download="${escapeHTML(name)}">
+            <a class="icon-btn-disc" title="Download/下载" rel="noopener" href="${escapeHTML(rawUrl)}" download="${escapeHTML(name)}">
               <i class="mdi mdi-download small-icon"></i>
             </a>
           </div>
           <div class="bb-details-grid">
             <div class="kv-row"><div class="kv-k">Type</div><div class="kv-v">${escapeHTML(type || '—')}</div></div>
             <div class="kv-row"><div class="kv-k">Size</div><div class="kv-v">${formatBytes(size)} <span class="kv-muted">(${group3(size)} bytes)</span></div></div>
-            <div class="kv-row"><div class="kv-k">Last modification</div><div class="kv-v">${escapeHTML(lastStr)}<span class="kv-muted">(${formatDateTime_utc(lastMod)})</span></div></div>
+            <div class="kv-row"><div class="kv-k">最后修改</div><div class="kv-v">${escapeHTML(lastStr)}<span class="kv-muted">(${formatDateTime_utc(lastMod)})</span></div></div>
             
           </div>
           <div style='font-size: 0.8rem;'>
@@ -181,11 +181,11 @@
       pdf: 'PDF',
       markdown: 'Markdown',
       doc: 'Document',
-      spreadsheet: 'Spreadsheet',
-      presentation: 'Presentation',
+      spreadsheet: 'Excel',
+      presentation: 'PPT',
       archive: 'Archive',
       code: 'Code',
-      other: 'Other',
+      other: '其他',
     };
     const pl = (s, n) => s + (n > 1 ? 's' : '');
 
@@ -224,7 +224,7 @@
       return `
         <div class="kv-row">
           <div class="kv-k">
-            <a class="bb-top kv-k mono" href="${href}" title="Ouvrir ${escapeHTML(name)}">
+            <a class="bb-top kv-k mono" href="${href}" title="打开 ${escapeHTML(name)}">
               &nbsp;${escapeHTML(name || '(racine)')}
             </a>
           </div>
@@ -255,19 +255,19 @@
          
         <div class="bb-details-body">
           <div class="bb-section bb-kv">
-            <div class="kv-row"><div class="kv-k">Objects</div><div class="kv-v">${group3(stat.count)}</div></div>
+            <div class="kv-row"><div class="kv-k">对象</div><div class="kv-v">${group3(stat.count)}</div></div>
             <div class="kv-row"><div class="kv-k">Size</div><div class="kv-v">${fmtBytes(stat.totalBytes)} <span class="kv-muted">(${group3(stat.totalBytes)} bytes)</span></div></div>
-            <div class="kv-row"><div class="kv-k">First interaction</div><div class="kv-v">${escapeHTML(oldestRel)} <span class="kv-muted">(${escapeHTML(oldestAbs)})</span></div></div>
-            <div class="kv-row"><div class="kv-k">Last interaction</div><div class="kv-v">${escapeHTML(newestRel)} <span class="kv-muted">(${escapeHTML(newestAbs)})</span></div></div>
+            <div class="kv-row"><div class="kv-k">首次交互</div><div class="kv-v">${escapeHTML(oldestRel)} <span class="kv-muted">(${escapeHTML(oldestAbs)})</span></div></div>
+            <div class="kv-row"><div class="kv-k">最后交互</div><div class="kv-v">${escapeHTML(newestRel)} <span class="kv-muted">(${escapeHTML(newestAbs)})</span></div></div>
             
             <h4 class="bb-details-subtitle" style="margin-top:10px">Files:</h4>
             <div class="bb-type-wrap">
-              ${typesHTML || `<div class="kv-muted">&nbsp;&nbsp;&nbsp;(aucun type détecté)</div>`}
+              ${typesHTML || `<div class="kv-muted">&nbsp;&nbsp;&nbsp;(未检测到类型)</div>`}
             </div>
             
-            <h4 class="bb-details-subtitle" style="margin-top:10px">Folders</h4>
+            <h4 class="bb-details-subtitle" style="margin-top:10px">文件夹</h4>
             <div class="bb-toplist">
-              ${topRows || `<div class="kv-muted">&nbsp;&nbsp;&nbsp;(no sub-folder)</div>`}
+              ${topRows || `<div class="kv-muted">&nbsp;&nbsp;&nbsp;(无子文件夹)</div>`}
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@
 
   async function deleteObject(absKey) {
     const ui = getUI();
-    const okc = await ui.confirm({ title: labels.deleteTitle, message: labels.deletePrompt, confirmText: 'Supprimer' });
+    const okc = await ui.confirm({ title: labels.deleteTitle, message: labels.deletePrompt, confirmText: '删除' });
     if (!okc) return false;
     const ok = await BB.api.del(absKey);
     if (!ok) {
