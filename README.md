@@ -8,23 +8,23 @@ The server signs S3 requests using AWS Signature V4 and forwards them to your S3
 
 ## Features
 
-* Browse bucket content with folders/prefixes
-* Preview files in the browser (depending on frontend capabilities)
-* Download objects (supports `Range`)
-* Upload objects (`PUT`)
-* Rename / move files and folders (implemented as copy + delete)
-* Delete files and folders (prefix delete)
-* JSON endpoints for listing and stats
-* Health endpoint (`/healthz`)
-* Works with any **S3-compatible** endpoint
+- Browse bucket content with folders/prefixes
+- Preview files in the browser (depending on frontend capabilities)
+- Download objects (supports `Range`)
+- Upload objects (`PUT`)
+- Rename / move files and folders (implemented as copy + delete)
+- Delete files and folders (prefix delete)
+- JSON endpoints for listing and stats
+- Health endpoint (`/healthz`)
+- Works with any **S3-compatible** endpoint
 
 ---
 
 ## Requirements
 
-* An S3-compatible endpoint
-* Access key / secret key with permissions on the target bucket
-* Docker (recommended) or a Go toolchain (optional)
+- An S3-compatible endpoint
+- Access key / secret key with permissions on the target bucket
+- Docker (recommended) or a Go toolchain (optional)
 
 ---
 
@@ -34,12 +34,12 @@ The server is configured via environment variables:
 
 | Variable               | Required | Description                   | Example          |
 | ---------------------- | :------: | ----------------------------- | ---------------- |
-| `S3_ENDPOINT`          | ✅       | Base URL of the S3 endpoint   | `http://s3:9000` |
-| `S3_REGION`            | ✅       | Region used for SigV4 signing | `us-east-1`      |
-| `S3_ACCESS_KEY_ID`     | ✅       | Access key id                 | `AKIA...`        |
-| `S3_SECRET_ACCESS_KEY` | ✅       | Secret access key             | `...`            |
-| `S3_BUCKET`            | ✅       | Bucket name                   | `my-bucket`      |
-| `PORT`                 | ❌       | Listen port (default: `8080`) | `8080`           |
+| `S3_ENDPOINT`          |    ✅    | Base URL of the S3 endpoint   | `http://s3:9000` |
+| `S3_REGION`            |    ✅    | Region used for SigV4 signing | `us-east-1`      |
+| `S3_ACCESS_KEY_ID`     |    ✅    | Access key id                 | `AKIA...`        |
+| `S3_SECRET_ACCESS_KEY` |    ✅    | Secret access key             | `...`            |
+| `S3_BUCKET`            |    ✅    | Bucket name                   | `my-bucket`      |
+| `PORT`                 |    ❌    | Listen port (default: `8080`) | `8080`           |
 
 ---
 
@@ -68,14 +68,14 @@ Open: `http://localhost:8080/`
 
 The web UI uses these JSON endpoints:
 
-* `GET /api/list?prefix=...&delimiter=/&max=...&continuationToken=...`
+- `GET /api/list?prefix=...&delimiter=/&max=...&continuationToken=...`
   Returns a paginated list of objects and common prefixes (folders) under the given prefix.
-* `GET /api/stats?prefix=...`
+- `GET /api/stats?prefix=...`
   Returns statistics (total size and count) for objects under the given prefix.
-* `POST /api/rename`
+- `POST /api/rename`
   Renames (moves) an object or prefix to a new key.
   Request body: `{"oldKey":"...","newKey":"..."}`
-* `POST /api/delete-prefix`
+- `POST /api/delete-prefix`
   Deletes an object or all objects under a prefix.
   Request body: `{"prefix":"..."}`
 
@@ -83,21 +83,21 @@ The web UI uses these JSON endpoints:
 
 The server acts as a transparent proxy to the configured S3 endpoint. All requests to `/s3*` are forwarded with AWS Signature V4.
 
-* `GET|HEAD /s3`
+- `GET|HEAD /s3`
   Lists the bucket (returns raw S3 XML `ListBucketResult`).
   Query parameters: `prefix`, `delimiter`, `max-keys`, `continuation-token`, etc.
-* `GET|HEAD /s3/<key>`
+- `GET|HEAD /s3/<key>`
   Retrieves an object. Supports `Range` headers for partial downloads.
-* `PUT /s3/<key>`
+- `PUT /s3/<key>`
   Uploads an object. The request body is streamed directly to S3.
-* `DELETE /s3/<key>`
+- `DELETE /s3/<key>`
   Deletes an object.
 
 These endpoints preserve S3 semantics and headers (ETag, Content‑Type, Content‑Length, etc.).
 
 ### Health Check
 
-* `GET /healthz`
+- `GET /healthz`
   Returns `200 OK` if the server can reach the configured S3 endpoint.
 
 ### CORS
@@ -113,9 +113,9 @@ Binary releases are published in GitHub Releases.
 
 Each release provides binaries for:
 
-* Linux (amd64, arm64)
-* macOS (amd64, arm64)
-* Windows (amd64, arm64)
+- Linux (amd64, arm64)
+- macOS (amd64, arm64)
+- Windows (amd64, arm64)
 
 ---
 
@@ -189,6 +189,6 @@ Then open: `http://localhost:8080/`
 
 ## Security notes
 
-* The server signs requests using your credentials: keep them secret.
-* If exposed publicly, run behind a reverse proxy with authentication.
-* CORS is enabled (`Access-Control-Allow-Origin: *`) for simplicity.
+- The server signs requests using your credentials: keep them secret.
+- If exposed publicly, run behind a reverse proxy with authentication.
+- CORS is enabled (`Access-Control-Allow-Origin: *`) for simplicity.

@@ -3,31 +3,31 @@ version: 2
 project_name: s3-browser
 
 builds:
-  - id: s3-browser
-    main: .
-    binary: s3-browser
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w
+    - id: s3-browser
+      main: .
+      binary: s3-browser
+      env:
+          - CGO_ENABLED=0
+      goos:
+          - linux
+          - darwin
+          - windows
+      goarch:
+          - amd64
+          - arm64
+      ldflags:
+          - -s -w
 
 archives:
-  - name_template: >-
-      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
-    files:
-      - public/**/*
+    - name_template: >-
+          {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+      files:
+          - public/**/*
 
 checksum:
-  name_template: checksums.txt
+    name_template: checksums.txt
 
 release:
-  github:
-    owner: SCcagg5
-    name: S3-Browser
+    github:
+        owner: SCcagg5
+        name: S3-Browser

@@ -6,10 +6,22 @@
         <link id="favicon" rel="shortcut icon" />
         <title>S3 浏览器</title>
         <link rel="stylesheet" href="favicon.ico" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
-        <link rel="stylesheet" href="assets/vendor/mdi/7.4.47/css/materialdesignicons.min.css" />
-        <link rel="stylesheet" href="assets/vendor/github-markdown-css/5/github-markdown-light.min.css" />
-        <link rel="stylesheet" href="assets/vendor/highlightjs/11/styles/github.min.css" />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        />
+        <link
+            rel="stylesheet"
+            href="assets/vendor/mdi/7.4.47/css/materialdesignicons.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="assets/vendor/github-markdown-css/5/github-markdown-light.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="assets/vendor/highlightjs/11/styles/github.min.css"
+        />
         <!-- 模块化 CSS -->
         <link rel="stylesheet" href="assets/css/variables.css" />
         <link rel="stylesheet" href="assets/css/reset.css" />
@@ -29,16 +41,28 @@
                         <div class="app-container">
                             <div class="breadcrumbs-container">
                                 <!-- 根目录链接 -->
-                                <div class="breadcrumb-root clickable" id="root-link" title="返回根目录">
-                                    <i class="mdi mdi-database-outline breadcrumb-root-icon"></i>
+                                <div
+                                    class="breadcrumb-root clickable"
+                                    id="root-link"
+                                    title="返回根目录"
+                                >
+                                    <i
+                                        class="mdi mdi-database-outline breadcrumb-root-icon"
+                                    ></i>
                                     <span>S3存储桶</span>
                                 </div>
                                 <span class="breadcrumb-separator">/</span>
                                 <!-- 动态面包屑导航 -->
                                 <div id="breadcrumbs"></div>
                                 <!-- 当前路径为空时的显示 -->
-                                <div id="empty-breadcrumb" class="breadcrumb-item" style="display: none">
-                                    <span class="breadcrumb-link current">根目录</span>
+                                <div
+                                    id="empty-breadcrumb"
+                                    class="breadcrumb-item"
+                                    style="display: none"
+                                >
+                                    <span class="breadcrumb-link current"
+                                        >根目录</span
+                                    >
                                 </div>
                             </div>
                             <div class="header-actions">
@@ -54,11 +78,24 @@
                                 <div class="toolbar-left">
                                     <div class="search-container">
                                         <div class="search-input-wrapper">
-                                            <i class="mdi mdi-magnify search-icon"></i>
-                                            <input type="text" class="search-input" id="search-input" placeholder="搜索当前文件夹（前缀）..." />
+                                            <i
+                                                class="mdi mdi-magnify search-icon"
+                                            ></i>
+                                            <input
+                                                type="text"
+                                                class="search-input"
+                                                id="search-input"
+                                                placeholder="搜索当前文件夹（前缀）..."
+                                            />
                                             <div class="search-actions">
-                                                <button class="toolbar-button icon-only" id="search-button" title="搜索">
-                                                    <i class="mdi mdi-magnify"></i>
+                                                <button
+                                                    class="toolbar-button icon-only"
+                                                    id="search-button"
+                                                    title="搜索"
+                                                >
+                                                    <i
+                                                        class="mdi mdi-magnify"
+                                                    ></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -67,15 +104,27 @@
                                 <!-- 中间：视图切换和其他控件 -->
                                 <div class="toolbar-center">
                                     <!-- 刷新按钮 -->
-                                    <button class="toolbar-button icon-only" id="refresh-button" title="刷新">
+                                    <button
+                                        class="toolbar-button icon-only"
+                                        id="refresh-button"
+                                        title="刷新"
+                                    >
                                         <i class="mdi mdi-refresh"></i>
                                     </button>
                                     <!-- 视图切换（稍后实现） -->
                                     <div class="view-toggle">
-                                        <button class="view-toggle-button" title="列表视图" id="list-view-button">
+                                        <button
+                                            class="view-toggle-button"
+                                            title="列表视图"
+                                            id="list-view-button"
+                                        >
                                             <i class="mdi mdi-view-list"></i>
                                         </button>
-                                        <button class="view-toggle-button" title="网格视图" id="grid-view-button">
+                                        <button
+                                            class="view-toggle-button"
+                                            title="网格视图"
+                                            id="grid-view-button"
+                                        >
                                             <i class="mdi mdi-view-grid"></i>
                                         </button>
                                     </div>
@@ -84,36 +133,68 @@
                                 <div class="toolbar-right">
                                     <!-- 操作下拉菜单 -->
                                     <div class="toolbar-dropdown">
-                                        <button class="toolbar-button" id="actions-dropdown-button">
+                                        <button
+                                            class="toolbar-button"
+                                            id="actions-dropdown-button"
+                                        >
                                             <i class="mdi mdi-cogs"></i>
                                             <span>操作</span>
                                             <i class="mdi mdi-chevron-down"></i>
                                         </button>
-                                        <div class="toolbar-dropdown-menu" id="actions-dropdown-menu">
-                                            <button class="toolbar-dropdown-item" id="download-all-button">
-                                                <i class="mdi mdi-archive-arrow-down-outline"></i>
+                                        <div
+                                            class="toolbar-dropdown-menu"
+                                            id="actions-dropdown-menu"
+                                        >
+                                            <button
+                                                class="toolbar-dropdown-item"
+                                                id="download-all-button"
+                                            >
+                                                <i
+                                                    class="mdi mdi-archive-arrow-down-outline"
+                                                ></i>
                                                 <span>下载所有文件</span>
                                             </button>
-                                            <button class="toolbar-dropdown-item" id="folder-details-button">
-                                                <i class="mdi mdi-information-outline"></i>
+                                            <button
+                                                class="toolbar-dropdown-item"
+                                                id="folder-details-button"
+                                            >
+                                                <i
+                                                    class="mdi mdi-information-outline"
+                                                ></i>
                                                 <span>文件夹详情</span>
                                             </button>
                                         </div>
                                     </div>
                                     <!-- 新建下拉菜单 -->
                                     <div class="toolbar-dropdown">
-                                        <button class="toolbar-button primary" id="new-dropdown-button">
+                                        <button
+                                            class="toolbar-button primary"
+                                            id="new-dropdown-button"
+                                        >
                                             <i class="mdi mdi-plus"></i>
                                             <span>新建</span>
                                             <i class="mdi mdi-chevron-down"></i>
                                         </button>
-                                        <div class="toolbar-dropdown-menu" id="new-dropdown-menu">
-                                            <button class="toolbar-dropdown-item" id="upload-file-button">
-                                                <i class="mdi mdi-file-upload-outline"></i>
+                                        <div
+                                            class="toolbar-dropdown-menu"
+                                            id="new-dropdown-menu"
+                                        >
+                                            <button
+                                                class="toolbar-dropdown-item"
+                                                id="upload-file-button"
+                                            >
+                                                <i
+                                                    class="mdi mdi-file-upload-outline"
+                                                ></i>
                                                 <span>上传文件</span>
                                             </button>
-                                            <button class="toolbar-dropdown-item" id="upload-dir-button">
-                                                <i class="mdi mdi-folder-upload"></i>
+                                            <button
+                                                class="toolbar-dropdown-item"
+                                                id="upload-dir-button"
+                                            >
+                                                <i
+                                                    class="mdi mdi-folder-upload"
+                                                ></i>
                                                 <span>上传文件夹</span>
                                             </button>
                                         </div>
@@ -124,13 +205,24 @@
                     </div>
 
                     <input type="file" id="file-input" style="display: none" />
-                    <input type="file" id="dir-input" style="display: none" webkitdirectory />
+                    <input
+                        type="file"
+                        id="dir-input"
+                        style="display: none"
+                        webkitdirectory
+                    />
 
                     <div class="container">
                         <div class="card">
                             <div class="card-content" style="padding-bottom: 0">
-                                <nav class="level is-mobile" style="margin-bottom: 0.5rem">
-                                    <div class="level-left" style="flex-wrap: wrap">
+                                <nav
+                                    class="level is-mobile"
+                                    style="margin-bottom: 0.5rem"
+                                >
+                                    <div
+                                        class="level-left"
+                                        style="flex-wrap: wrap"
+                                    >
                                         <div class="level-item">
                                             <select id="page-size-select">
                                                 <option value="10">10</option>
@@ -140,20 +232,43 @@
                                                 <option value="200">200</option>
                                             </select>
                                             <span>&nbsp;</span>
-                                            <span class="has-text-grey">每页</span>
+                                            <span class="has-text-grey"
+                                                >每页</span
+                                            >
                                         </div>
                                     </div>
 
-                                    <div class="level-right" style="flex-wrap: wrap; gap: 0.5rem">
+                                    <div
+                                        class="level-right"
+                                        style="flex-wrap: wrap; gap: 0.5rem"
+                                    >
                                         <div class="level-item">
-                                            <button class="icon-btn-disc" id="prev-page-button" disabled title="上一页">
-                                                <i class="mdi mdi-chevron-left"></i>
+                                            <button
+                                                class="icon-btn-disc"
+                                                id="prev-page-button"
+                                                disabled
+                                                title="上一页"
+                                            >
+                                                <i
+                                                    class="mdi mdi-chevron-left"
+                                                ></i>
                                             </button>
                                             <span>&nbsp;</span>
-                                            <span class="has-text-grey" id="page-info">Item 0 to 50</span>
+                                            <span
+                                                class="has-text-grey"
+                                                id="page-info"
+                                                >Item 0 to 50</span
+                                            >
                                             <span>&nbsp;</span>
-                                            <button class="icon-btn-disc" id="next-page-button" disabled title="下一页">
-                                                <i class="mdi mdi-chevron-right"></i>
+                                            <button
+                                                class="icon-btn-disc"
+                                                id="next-page-button"
+                                                disabled
+                                                title="下一页"
+                                            >
+                                                <i
+                                                    class="mdi mdi-chevron-right"
+                                                ></i>
                                             </button>
                                         </div>
                                     </div>
@@ -165,25 +280,56 @@
                                     <table class="modern-table" id="file-table">
                                         <thead>
                                             <tr>
-                                                <th class="table-col-name">名称</th>
-                                                <th class="table-col-size">大小</th>
-                                                <th class="table-col-modified">最后修改</th>
-                                                <th class="table-col-actions">操作</th>
+                                                <th class="table-col-name">
+                                                    名称
+                                                </th>
+                                                <th class="table-col-size">
+                                                    大小
+                                                </th>
+                                                <th class="table-col-modified">
+                                                    最后修改
+                                                </th>
+                                                <th class="table-col-actions">
+                                                    操作
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody id="table-body">
                                             <!-- 动态行将通过JavaScript填充 -->
                                         </tbody>
                                     </table>
-                                    <div id="loading-indicator" style="display: none; text-align: center; padding: 20px">
+                                    <div
+                                        id="loading-indicator"
+                                        style="
+                                            display: none;
+                                            text-align: center;
+                                            padding: 20px;
+                                        "
+                                    >
                                         <div class="loading-spinner"></div>
-                                        <div class="loading-text">加载中...</div>
+                                        <div class="loading-text">
+                                            加载中...
+                                        </div>
                                     </div>
-                                    <div id="empty-table" style="display: none; text-align: center; padding: 40px; color: #9ca3af">
-                                        <i class="mdi mdi-folder-open-outline" style="font-size: 3rem"></i>
+                                    <div
+                                        id="empty-table"
+                                        style="
+                                            display: none;
+                                            text-align: center;
+                                            padding: 40px;
+                                            color: #9ca3af;
+                                        "
+                                    >
+                                        <i
+                                            class="mdi mdi-folder-open-outline"
+                                            style="font-size: 3rem"
+                                        ></i>
                                         <p>暂无文件</p>
                                     </div>
-                                    <div id="grid-view-container" style="display: none"></div>
+                                    <div
+                                        id="grid-view-container"
+                                        style="display: none"
+                                    ></div>
                                 </div>
                             </div>
                         </div>

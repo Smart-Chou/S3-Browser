@@ -3,6 +3,7 @@
 本指南介绍如何设置 GitHub Actions 来自动构建和发布 Docker 镜像。
 
 ## 目录
+
 - [工作原理](#工作原理)
 - [自动触发条件](#自动触发条件)
 - [配置 Secrets](#配置-secrets)
@@ -12,23 +13,25 @@
 ## 工作原理
 
 GitHub Actions workflow (`.github/workflows/docker-build.yml`) 会在以下情况自动运行：
+
 1. **构建和测试**：推送到 `main` 分支或创建 Pull Request 时
 2. **构建和发布**：推送标签（如 `v1.0.0`）时
 3. **手动触发**：通过 GitHub 界面手动触发
 
 工作流会：
+
 - 构建支持多架构（amd64, arm64）的 Docker 镜像
 - 运行简单测试验证镜像功能
 - 发布镜像到 GitHub Container Registry (GHCR)
 
 ## 自动触发条件
 
-| 事件 | 动作 | 镜像推送 |
-|------|------|----------|
-| 推送到 `main` 分支 | 构建 + 测试 | 否 |
-| 创建 Pull Request | 构建 + 测试 | 否 |
-| 推送标签 `v*` | 构建 + 测试 + 发布 | 是 |
-| 手动触发 | 构建 + 测试 + 发布 | 是 |
+| 事件               | 动作               | 镜像推送 |
+| ------------------ | ------------------ | -------- |
+| 推送到 `main` 分支 | 构建 + 测试        | 否       |
+| 创建 Pull Request  | 构建 + 测试        | 否       |
+| 推送标签 `v*`      | 构建 + 测试 + 发布 | 是       |
+| 手动触发           | 构建 + 测试 + 发布 | 是       |
 
 ## 配置 Secrets
 
@@ -42,8 +45,8 @@ GitHub Actions 默认使用 `secrets.GITHUB_TOKEN` 登录 GHCR，无需额外配
 
 1. 在 Docker Hub 创建账号（如需要）
 2. 在 GitHub 仓库设置中添加 Secrets：
-   - `DOCKERHUB_USERNAME`：Docker Hub 用户名
-   - `DOCKERHUB_TOKEN`：Docker Hub 访问令牌
+    - `DOCKERHUB_USERNAME`：Docker Hub 用户名
+    - `DOCKERHUB_TOKEN`：Docker Hub 访问令牌
 
 3. 在 workflow 文件中取消注释 Docker Hub 登录部分：
 
@@ -52,17 +55,17 @@ GitHub Actions 默认使用 `secrets.GITHUB_TOKEN` 登录 GHCR，无需额外配
   if: github.event_name != 'pull_request'
   uses: docker/login-action@v3
   with:
-    registry: docker.io
-    username: ${{ secrets.DOCKERHUB_USERNAME }}
-    password: ${{ secrets.DOCKERHUB_TOKEN }}
+      registry: docker.io
+      username: ${{ secrets.DOCKERHUB_USERNAME }}
+      password: ${{ secrets.DOCKERHUB_TOKEN }}
 ```
 
 4. 在 metadata 部分添加 Docker Hub 镜像名称：
 
 ```yaml
 images: |
-  ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/s3-browser
-  docker.io/yourusername/s3-browser
+    ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/s3-browser
+    docker.io/yourusername/s3-browser
 ```
 
 ## 自定义配置
@@ -75,10 +78,10 @@ images: |
 - name: Calculate image name
   id: image-name
   run: |
-    # 自定义镜像名称（确保使用小写）
-    FULL_IMAGE_NAME="custom-username/s3-browser"
-    echo "lowercase_name=${FULL_IMAGE_NAME}" >> $GITHUB_OUTPUT
-    echo "Calculated image name: ${FULL_IMAGE_NAME}"
+      # 自定义镜像名称（确保使用小写）
+      FULL_IMAGE_NAME="custom-username/s3-browser"
+      echo "lowercase_name=${FULL_IMAGE_NAME}" >> $GITHUB_OUTPUT
+      echo "Calculated image name: ${FULL_IMAGE_NAME}"
 ```
 
 ### 添加更多架构支持
@@ -95,8 +98,8 @@ platforms: linux/amd64,linux/arm64,linux/arm/v7
 
 ```yaml
 build-args: |
-  GO_VERSION=1.25.0
-  BUILD_DATE=${{ github.event.head_commit.timestamp }}
+    GO_VERSION=1.25.0
+    BUILD_DATE=${{ github.event.head_commit.timestamp }}
 ```
 
 ## 使用构建的镜像
@@ -136,6 +139,7 @@ docker run -d \
 ### 权限问题
 
 确保仓库设置中已启用以下权限：
+
 - `packages: write`（用于推送镜像到 GHCR）
 - `contents: read`（用于检出代码）
 

@@ -2,86 +2,93 @@
 
 /* 中等屏幕（平板） */
 @media screen and (max-width: 768px) {
-  .toolbar {
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
+    .toolbar {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
 
-  .toolbar-left,
-  .toolbar-center,
-  .toolbar-right {
-    flex: 1 1 100%;
-    justify-content: center;
-  }
+    .toolbar-left,
+    .toolbar-center,
+    .toolbar-right {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
 
-  .search-container {
-    max-width: 100%;
-    min-width: 0;
-  }
+    .search-container {
+        max-width: 100%;
+        min-width: 0;
+    }
 
-  .breadcrumbs-container {
-    font-size: 0.85rem;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+    .breadcrumbs-container {
+        font-size: 0.85rem;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
 
-  .breadcrumb-link {
-    max-width: 120px;
-  }
+    .breadcrumb-link {
+        max-width: 120px;
+    }
 
-  /* 表格列隐藏 */
-  .name-column::before { display: none !important; }
-  .name-column > div:first-child { max-width: calc(100% - 5.5rem); }
-  .size-column, .modified-column { display: none !important; }
+    /* 表格列隐藏 */
+    .name-column::before {
+        display: none !important;
+    }
+    .name-column > div:first-child {
+        max-width: calc(100% - 5.5rem);
+    }
+    .size-column,
+    .modified-column {
+        display: none !important;
+    }
 }
 
 /* 小屏幕（手机） */
 @media screen and (max-width: 480px) {
-  .app-container {
-    padding: 0 var(--space-md);
-  }
+    .app-container {
+        padding: 0 var(--space-md);
+    }
 
-  .table th,
-  .table td {
-    padding: var(--space-sm) var(--space-md);
-  }
-}/* 响应式设计优化 */
+    .table th,
+    .table td {
+        padding: var(--space-sm) var(--space-md);
+    }
+} /* 响应式设计优化 */
 @media screen and (max-width: 768px) {
-  .toolbar {
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
+    .toolbar {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
 
-  .toolbar-left,
-  .toolbar-center,
-  .toolbar-right {
-    flex: 1 1 100%;
-    justify-content: center;
-  }
+    .toolbar-left,
+    .toolbar-center,
+    .toolbar-right {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
 
-  .search-container {
-    max-width: 100%;
-    min-width: 0;
-  }
+    .search-container {
+        max-width: 100%;
+        min-width: 0;
+    }
 
-  .breadcrumbs-container {
-    font-size: 0.85rem;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+    .breadcrumbs-container {
+        font-size: 0.85rem;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
 
-  .breadcrumb-link {
-    max-width: 120px;
-  }
+    .breadcrumb-link {
+        max-width: 120px;
+    }
 }
 
 @media screen and (max-width: 480px) {
-  .app-container {
-    padding: 0 var(--space-md);
-  }
+    .app-container {
+        padding: 0 var(--space-md);
+    }
 
-  .table th,
-  .table td {
-    padding: var(--space-sm) var(--space-md);
-  }
+    .table th,
+    .table td {
+        padding: var(--space-sm) var(--space-md);
+    }
 }
