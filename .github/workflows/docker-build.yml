@@ -10,14 +10,9 @@ on:
 
 env:
   # 镜像配置
-  IMAGE_NAME: s3-browser
-  # 默认使用 GitHub Container Registry (ghcr.io)
-  # 如果要发布到 Docker Hub，请修改为 'docker.io/yourusername/s3-browser'
   REGISTRY: ghcr.io
-  # 使用 GitHub 仓库作为镜像名称的一部分
-  # 格式: ghcr.io/<OWNER>/<REPO>/<IMAGE_NAME>
-  # 对于 Docker Hub: docker.io/<USERNAME>/<IMAGE_NAME>
-  FULL_IMAGE_NAME: ${{ github.repository }}/${{ env.IMAGE_NAME }}
+  # 如果要发布到 Docker Hub，请修改为 'docker.io/yourusername/s3-browser'
+  FULL_IMAGE_NAME: ${{ github.repository }}/s3-browser
 
 jobs:
   build-and-push:
@@ -59,7 +54,7 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}
             # 如果要同时推送到多个仓库，添加其他镜像名称
-            # docker.io/yourusername/${{ env.IMAGE_NAME }}
+            # docker.io/yourusername/s3-browser
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -97,7 +92,7 @@ jobs:
             -e S3_SECRET_ACCESS_KEY="test" \
             -e S3_BUCKET="test" \
             -p 8080:8080 \
-            ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA::7}
+            ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA:0:7}
 
           # 等待服务启动
           sleep 10
@@ -116,7 +111,7 @@ jobs:
           echo "**镜像名称:** \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**标签:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG=${GITHUB_REF#refs/tags/}
             echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:$TAG\`" >> $GITHUB_STEP_SUMMARY

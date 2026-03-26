@@ -62,7 +62,7 @@ GitHub Actions 默认使用 `secrets.GITHUB_TOKEN` 登录 GHCR，无需额外配
 ```yaml
 images: |
   ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}
-  docker.io/yourusername/${{ env.IMAGE_NAME }}
+  docker.io/yourusername/s3-browser
 ```
 
 ## 自定义配置
@@ -73,9 +73,8 @@ images: |
 
 ```yaml
 env:
-  IMAGE_NAME: s3-browser  # 镜像名称
   REGISTRY: ghcr.io       # 注册表
-  # FULL_IMAGE_NAME 会自动基于仓库名生成
+  FULL_IMAGE_NAME: ${{ github.repository }}/s3-browser
 ```
 
 ### 添加更多架构支持
