@@ -38,7 +38,8 @@
   color: var(--primary);
 }
 
-.grid-item-name {
+.grid-item-name,
+.grid-view-name {
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 8px;
@@ -57,6 +58,28 @@
 
 .grid-item-details span {
   display: block;
+}
+
+.grid-view-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.grid-view-meta span {
+  display: block;
+}
+
+.grid-view-size,
+.grid-view-time,
+.grid-view-folder {
+  display: block;
+  line-height: 1.4;
+}
+
+.grid-view-size:not(:last-child),
+.grid-view-time:not(:last-child) {
+  margin-bottom: 2px;
 }
 
 /* 响应式设计 */

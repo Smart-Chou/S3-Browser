@@ -361,7 +361,11 @@
     elements.prevPageButton.disabled = !hasPrev;
     elements.nextPageButton.disabled = !hasNext;
 
-    elements.pageInfo.textContent = `第 ${page} 页，共 ${total} 项`;
+    if (state.totalCount !== null && state.totalCount !== undefined) {
+        elements.pageInfo.textContent = `第 ${page} 页，本页 ${total} 项（共 ${state.totalCount} 项）${hasNext ? '（还有更多）' : ''}`;
+    } else {
+        elements.pageInfo.textContent = `第 ${page} 页，本页 ${total} 项（每页 ${state.pageSize} 项）${hasNext ? '（还有更多）' : '（最后一页）'}`;
+    }
 
     // 下载全部按钮状态
     if (elements.downloadAllButton) {

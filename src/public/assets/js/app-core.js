@@ -38,6 +38,7 @@
     previousContinuationTokens: [],
     continuationToken: undefined,
     nextContinuationToken: undefined,
+    totalCount: null,
     windowWidth: window.innerWidth,
     downloadAllFilesCount: null,
     downloadAllFilesReceivedCount: null,

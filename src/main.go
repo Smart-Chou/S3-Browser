@@ -68,6 +68,7 @@ type listResponseJSON struct {
     Items                 []listItemJSON `json:"items"`
     NextContinuationToken string         `json:"nextContinuationToken,omitempty"`
     IsTruncated           bool           `json:"isTruncated"`
+    TotalCount            int            `json:"totalCount,omitempty"`
 }
 
 type cfg struct {
@@ -915,12 +916,64 @@ func isExcluded(rel string, excludes []string) bool {
     return false
 }
 
+func (p *proxy) countObjects(ctx context.Context, prefix, delimiter string, excludes []string) (int, error) {
+    total := 0
+    var startAfter string
+
+    for {
+        lb, err := p.s3ListPage(ctx, prefix, delimiter, startAfter, 1000)
+        if err != nil {
+            return 0, err
+        }
+
+        // 计数 CommonPrefixes (文件夹)
+        for _, cp := range lb.CommonPrefixes {
+            rel := cp.Prefix
+            if prefix != "" && strings.HasPrefix(rel, prefix) {
+                rel = strings.TrimPrefix(rel, prefix)
+            }
+            if rel == "" || !strings.HasSuffix(rel, "/") {
+                continue
+            }
+            if isExcluded(rel, excludes) {
+                continue
+            }
+            total++
+        }
+
+        // 计数 Contents (文件，排除文件夹标记)
+        for _, c := range lb.Contents {
+            // 跳过文件夹标记
+            if strings.HasSuffix(c.Key, "/") && c.Size == 0 {
+                continue
+            }
+            rel := c.Key
+            if prefix != "" && strings.HasPrefix(rel, prefix) {
+                rel = strings.TrimPrefix(rel, prefix)
+            }
+            if isExcluded(rel, excludes) {
+                continue
+            }
+            total++
+        }
+
+        if !lb.IsTruncated {
+            break
+        }
+        startAfter = lb.Contents[len(lb.Contents)-1].Key
+    }
+
+    return total, nil
+}
+
 func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet && r.Method != http.MethodHead {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
     }
     ctx := r.Context()
+    var err error
+    var cur ffCursor
 
     prefix := strings.TrimLeft(r.URL.Query().Get("prefix"), "/")
     delimiter := r.URL.Query().Get("delimiter")
@@ -928,12 +981,23 @@ func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
 
     limit := 50
     if s := r.URL.Query().Get("max"); s != "" {
-        if v, err := strconv.Atoi(s); err == nil && v > 0 { limit = v }
+        if v, err2 := strconv.Atoi(s); err2 == nil && v > 0 { limit = v }
     }
 
         excludes := parseExcludes(r)
 
-        cur, err := decodeCursor(r.URL.Query().Get("continuationToken"))
+        // 是否计算总数
+        countTotal := r.URL.Query().Get("total") == "true"
+        var totalCount int
+        if countTotal {
+            totalCount, err = p.countObjects(ctx, prefix, delimiter, excludes)
+            if err != nil {
+                http.Error(w, fmt.Sprintf("Failed to count objects: %v", err), http.StatusInternalServerError)
+                return
+            }
+        }
+
+        cur, err = decodeCursor(r.URL.Query().Get("continuationToken"))
     if err != nil {
         http.Error(w, "Invalid continuationToken", http.StatusBadRequest)
         return
@@ -1069,6 +1133,9 @@ func (p *proxy) handleListJSON(w http.ResponseWriter, r *http.Request) {
         Delimiter: delimiter,
         Items:     items,
     }
+    if countTotal {
+        out.TotalCount = totalCount
+    }
     if hasMore {
         out.IsTruncated = true
         out.NextContinuationToken = encodeCursor(next)
@@ -1138,6 +1205,36 @@ func serveFSFile(w http.ResponseWriter, r *http.Request, root fs.FS, p string) {
 
 	if ct := mime.TypeByExtension(path.Ext(p)); ct != "" {
 		w.Header().Set("Content-Type", ct)
+	} else {
+		// 后备MIME类型映射
+		switch path.Ext(p) {
+		case ".css":
+			w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		case ".js":
+			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+		case ".json":
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		case ".html":
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		case ".png":
+			w.Header().Set("Content-Type", "image/png")
+		case ".jpg", ".jpeg":
+			w.Header().Set("Content-Type", "image/jpeg")
+		case ".gif":
+			w.Header().Set("Content-Type", "image/gif")
+		case ".svg":
+			w.Header().Set("Content-Type", "image/svg+xml")
+		case ".woff2":
+			w.Header().Set("Content-Type", "font/woff2")
+		case ".woff":
+			w.Header().Set("Content-Type", "font/woff")
+		case ".ttf":
+			w.Header().Set("Content-Type", "font/ttf")
+		case ".eot":
+			w.Header().Set("Content-Type", "application/vnd.ms-fontobject")
+		default:
+			// 不设置Content-Type，让浏览器猜测
+		}
 	}
 
 	if rs, ok := f.(io.ReadSeeker); ok {

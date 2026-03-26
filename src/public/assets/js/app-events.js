@@ -73,6 +73,20 @@
   }
 
   /**
+   * 打开文件预览
+   * @param {Object} row - 文件行数据
+   */
+  function openPreview(row) {
+    console.log('openPreview called for row:', row);
+    if (BB.nav && BB.nav.openPreview) {
+      console.log('BB.nav.openPreview exists, calling with row:', row);
+      BB.nav.openPreview(row);
+    } else {
+      console.error('BB.nav.openPreview not available', BB.nav);
+    }
+  }
+
+  /**
    * 文件夹详情事件
    * @param {Object} row - 文件夹行数据
    */
@@ -404,6 +418,7 @@
   BB.events.onRowRename = onRowRename;
   BB.events.onRowMetadata = onRowMetadata;
   BB.events.onRowDelete = onRowDelete;
+  BB.events.openPreview = openPreview;
 
   // 文件夹操作事件
   BB.events.onPrefixDetails = onPrefixDetails;

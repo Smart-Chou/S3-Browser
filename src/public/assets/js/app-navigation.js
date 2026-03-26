@@ -86,7 +86,7 @@
 
     try {
       const prefix = utils.bucketPrefix() || '';
-      let url = `/api/list?prefix=${encodeURIComponent(prefix)}&delimiter=/&max=${state.pageSize || 50}`;
+      let url = `/api/list?prefix=${encodeURIComponent(prefix)}&delimiter=/&max=${state.pageSize || 50}&total=true`;
 
       if (config.trashPrefix) {
         url += `&exclude=${encodeURIComponent(config.trashPrefix)}`;
@@ -152,6 +152,7 @@
       BB.render.updateState({
         pathContentTableData,
         nextContinuationToken,
+        totalCount: data.totalCount !== undefined ? data.totalCount : null,
         isRefreshing: false
       });
     } catch (error) {
@@ -165,10 +166,20 @@
    * @param {Object} row - 文件行数据
    */
   async function openPreview(row) {
-    const dir = (state.pathPrefix || '').replace(/[^/]*$/, '');
+    console.log('nav.openPreview called with row:', row);
+    // 使用完整的 S3 key（row.key 已包含完整路径）
+    const key = row.key || row.name;
+    // 对路径进行编码，保留斜杠
+    const encodedKey = utils.encodePath(key);
     const base = location.pathname.replace(/[^/]*$/, '') + 'preview';
-    const href = `${base}#${dir}${row.name}`;
-    window.open(href, '_blank', 'noopener,noreferrer');
+    const href = `${base}#${encodedKey}`;
+    console.log('Computed preview URL:', href, 'key:', key, 'encodedKey:', encodedKey, 'pathPrefix:', state.pathPrefix, 'location.pathname:', location.pathname);
+    const newWindow = window.open(href, '_blank', 'noopener,noreferrer');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      console.error('Failed to open preview window. Popup blocker?');
+    } else {
+      console.log('Preview window opened successfully');
+    }
   }
 
   // ============================================
