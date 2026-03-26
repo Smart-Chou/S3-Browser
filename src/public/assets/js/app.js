@@ -41,6 +41,11 @@
       BB.render.setViewMode(savedMode);
     }
 
+    // 设置分页大小选择器初始值
+    if (BB.core.elements.pageSizeSelect) {
+      BB.core.elements.pageSizeSelect.value = BB.core.config.pageSize || 10;
+    }
+
     // 如果没有数据，触发初始刷新
     if (BB.core.state && BB.core.state.pathContentTableData.length === 0) {
       if (BB.nav.refresh) {

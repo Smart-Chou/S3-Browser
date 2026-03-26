@@ -23,7 +23,7 @@
     rootPrefix: '',
     trashPrefix: '_trash/',
     keyExcludePatterns: [/^index\.html$/],
-    pageSize: 50,
+    pageSize: 10,
     defaultOrder: 'name-asc'
   };
   BB.cfg = config;
