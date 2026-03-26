@@ -61,7 +61,7 @@ GitHub Actions 默认使用 `secrets.GITHUB_TOKEN` 登录 GHCR，无需额外配
 
 ```yaml
 images: |
-  ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}
+  ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/s3-browser
   docker.io/yourusername/s3-browser
 ```
 
@@ -69,12 +69,16 @@ images: |
 
 ### 修改镜像名称
 
-在 workflow 文件的 `env` 部分修改：
+镜像名称在 `Calculate image name` 步骤中自动计算为小写格式。如果需要自定义镜像名称，修改该步骤中的 `FULL_IMAGE_NAME` 变量：
 
 ```yaml
-env:
-  REGISTRY: ghcr.io       # 注册表
-  FULL_IMAGE_NAME: ${{ github.repository }}/s3-browser
+- name: Calculate image name
+  id: image-name
+  run: |
+    # 自定义镜像名称（确保使用小写）
+    FULL_IMAGE_NAME="custom-username/s3-browser"
+    echo "lowercase_name=${FULL_IMAGE_NAME}" >> $GITHUB_OUTPUT
+    echo "Calculated image name: ${FULL_IMAGE_NAME}"
 ```
 
 ### 添加更多架构支持

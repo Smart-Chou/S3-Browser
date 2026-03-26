@@ -12,7 +12,7 @@ env:
   # 镜像配置
   REGISTRY: ghcr.io
   # 如果要发布到 Docker Hub，请修改为 'docker.io/yourusername/s3-browser'
-  FULL_IMAGE_NAME: ${{ github.repository }}/s3-browser
+  # FULL_IMAGE_NAME 将在步骤中设置为小写版本
 
 jobs:
   build-and-push:
@@ -47,12 +47,21 @@ jobs:
       #     username: ${{ secrets.DOCKERHUB_USERNAME }}
       #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Calculate image name
+        id: image-name
+        run: |
+          # 将仓库名称转换为小写，Docker 要求镜像名称全小写
+          LOWERCASE_REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          FULL_IMAGE_NAME="${LOWERCASE_REPO}/s3-browser"
+          echo "lowercase_name=${FULL_IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "Calculated image name: ${FULL_IMAGE_NAME}"
+
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}
             # 如果要同时推送到多个仓库，添加其他镜像名称
             # docker.io/yourusername/s3-browser
           tags: |
@@ -92,7 +101,7 @@ jobs:
             -e S3_SECRET_ACCESS_KEY="test" \
             -e S3_BUCKET="test" \
             -p 8080:8080 \
-            ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA:0:7}
+            ${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:sha-${GITHUB_SHA:0:7}
 
           # 等待服务启动
           sleep 10
@@ -108,14 +117,14 @@ jobs:
         run: |
           echo "## Docker 镜像信息" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**镜像名称:** \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**镜像名称:** \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**标签:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:sha-${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:sha-${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG=${GITHUB_REF#refs/tags/}
-            echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:$TAG\`" >> $GITHUB_STEP_SUMMARY
-            echo "- \`${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:latest\` (如果推送到 main 分支)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:$TAG\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:latest\` (如果推送到 main 分支)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**支持的架构:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
@@ -129,5 +138,5 @@ jobs:
           echo "  -e S3_SECRET_ACCESS_KEY=\"your-secret-key\" \\" >> $GITHUB_STEP_SUMMARY
           echo "  -e S3_BUCKET=\"your-bucket\" \\" >> $GITHUB_STEP_SUMMARY
           echo "  -p 8080:8080 \\" >> $GITHUB_STEP_SUMMARY
-          echo "  ${{ env.REGISTRY }}/${{ env.FULL_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "  ${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:latest" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
