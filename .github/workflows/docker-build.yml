@@ -67,6 +67,7 @@ jobs:
             # 如果要同时推送到多个仓库，添加其他镜像名称
             # docker.io/yourusername/s3-browser
           tags: |
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -126,7 +127,9 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG=${GITHUB_REF#refs/tags/}
             echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:$TAG\`" >> $GITHUB_STEP_SUMMARY
-            echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:latest\` (如果推送到 main 分支)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "- \`${{ env.REGISTRY }}/${{ steps.image-name.outputs.lowercase_name }}:latest\` (所有非 PR 构建都会生成)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**支持的架构:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
