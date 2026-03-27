@@ -179,12 +179,32 @@
             }
             const pathContentTableData = Array.from(map.values());
 
+            // 检查根目录下是否存在 readme.md 文件（不区分大小写）
+            let readmeContent = null;
+            if (!state.pathPrefix) { // 如果当前路径前缀为空，说明在根目录
+                // 从 items 中查找不区分大小写的 readme.md 文件
+                const readmeItem = items.find(item =>
+                    item.type === 'content' &&
+                    item.name &&
+                    item.name.toLowerCase() === 'readme.md'
+                );
+                if (readmeItem && readmeItem.key) {
+                    try {
+                        readmeContent = await BB.api.getText(readmeItem.key);
+                    } catch (e) {
+                        // 文件不存在或其他错误，忽略
+                        console.debug('readme.md fetch failed:', e);
+                    }
+                }
+            }
+
             BB.render.updateState({
                 pathContentTableData,
                 nextContinuationToken,
                 totalCount:
                     data.totalCount !== undefined ? data.totalCount : null,
                 isRefreshing: false,
+                readmeContent,
             });
         } catch (error) {
             BB.ui.toast(

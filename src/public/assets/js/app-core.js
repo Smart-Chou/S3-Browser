@@ -48,6 +48,7 @@
         pageSize: config.pageSize || 50,
         dropdownOpen: null,
         viewMode: "list", // 'list' 或 'grid'
+        readmeContent: null,
     };
 
     // ============================================
@@ -83,6 +84,7 @@
         listViewButton: document.getElementById("list-view-button"),
         gridViewButton: document.getElementById("grid-view-button"),
         gridViewContainer: document.getElementById("grid-view-container"),
+        readmeContainer: null,
     };
 
     // ============================================

@@ -75,6 +75,7 @@
             if (elements.gridViewContainer) {
                 elements.gridViewContainer.style.display = "none";
             }
+            renderReadme(); // 确保 readme 容器隐藏
             return;
         }
 
@@ -86,6 +87,7 @@
             if (elements.gridViewContainer) {
                 elements.gridViewContainer.style.display = "none";
             }
+            renderReadme(); // 显示 readme（如果存在）
             return;
         }
 
@@ -103,6 +105,60 @@
                 elements.gridViewContainer.style.display = "block";
             }
             renderGridView();
+        }
+        renderReadme();
+    }
+
+    /**
+     * 确保 readme 容器存在
+     */
+    function ensureReadmeContainer() {
+        if (!elements.readmeContainer) {
+            // 找到 table-wrap 容器
+            const tableWrap = document.querySelector('.table-wrap');
+            if (tableWrap) {
+                const container = document.createElement('div');
+                container.id = 'readme-container';
+                container.className = 'readme-container';
+                // 添加一些基本样式
+                container.style.marginTop = '2rem';
+                container.style.padding = '1.5rem';
+                container.style.border = '1px solid #e5e7eb';
+                container.style.borderRadius = '0.5rem';
+                container.style.backgroundColor = '#f9fafb';
+                // 插入到 table-wrap 末尾
+                tableWrap.appendChild(container);
+                elements.readmeContainer = container;
+            }
+        }
+        return elements.readmeContainer;
+    }
+
+    /**
+     * 渲染 readme 内容
+     */
+    function renderReadme() {
+        const container = ensureReadmeContainer();
+        if (!container) return;
+
+        // 在刷新状态、非根目录或没有 readme 内容时隐藏
+        if (state.isRefreshing || state.pathPrefix || !state.readmeContent) {
+            container.style.display = 'none';
+            return;
+        }
+
+        // 显示并渲染 readme
+        container.style.display = 'block';
+        container.innerHTML = '';
+        // 使用 BB.render.renderMarkdown 渲染
+        if (BB.render && BB.render.renderMarkdown) {
+            const markdownEl = BB.render.renderMarkdown(state.readmeContent);
+            container.appendChild(markdownEl);
+        } else {
+            // 降级处理：显示原始文本
+            const pre = document.createElement('pre');
+            pre.textContent = state.readmeContent;
+            container.appendChild(pre);
         }
     }
 
